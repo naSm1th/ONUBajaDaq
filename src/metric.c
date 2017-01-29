@@ -14,54 +14,70 @@
 #define WRITE       1                /* writer fd */
 #define EXEC_ERROR -1                /* execvp error code */
 #define SERIAL  "serial"
-#define MCC     "mcc"
+#define MCI     "mci"
 
 main(int argc, char *argv[]) {
-    int childp[2];
-    int parentp[2];
+    int serial[2];
+    int logger_s[2];
+    int mci[2];
+    int logger_m[2];
 
-    if(pipe(parentp) || pipe(childp)) {
+    if(pipe(serial) || pipe(logger_s)) {
         perror("pipe");
         exit(1);
     }
 
     int pid_sfork = fork();
     if (pid_sfork == -1) {
-        perror("fork");
+        perror("fork_serial");
         exit(1); 
     } else if (pid_sfork == 0) { /* child: serial */
-        int in, out;
-        in = childp[READ];
-        out = parentp[WRITE];
+        int in_s, out_s;
+        in_s = serial[READ];
+        out_s = logger_s[WRITE];
+        close(logger_s[READ]); /* close unused ends */
+        close(serial[WRITE]);
+        dup2(in_s,0);
+        dup2(out_s,1);
     
-        execvp(SERIAL);    /* start serial reader program */
+        execvp(SERIAL);    /* start serial program */
         fprintf(stderr, "metric.c: %s could not be executed\n", SERIAL);
         exit(EXEC_ERROR);
     } else {        /* parent: logger */
-        //close(fd[WRITE]);           /* Close unused end */
-        //dup2(fd[READ], 0);          /* Duplicate used end to stdin */
-        //close(fd[READ]);            /* Close original used end */
-        //execvp(rargs[0], rargs);    /* Execute reader program */
-        //fprintf(stderr, "metric.c: %s could not be executed\n", );
-        //exit(CMDNF);
-        int in, out;
-        in = parentp[READ];
-        out = childp[WRITE];
+        int to_s, from_s;
+        from_s = logger_s[READ];
+        to_s = serial[WRITE];
+        close(logger_s[WRITE]); /* close unused ends */
+        close(serial[READ]);
 
         int pid_mfork = fork();
         if (pid_mfork == -1) {
-            perror("fork");
+            perror("fork_mci");
             exit(1); 
-        } else if (pid_mfork == 0) { /* child: mcc */
-            int in, out;
-            in = childp[READ];
-            out = parentp[WRITE];
+        } else if (pid_mfork == 0) { /* child: mci */
+            int in_m, out_m;
+            in_m = mci[READ];
+            out_m = logger_m[WRITE];
+            close(logger_m[READ]); /* close unused ends */
+            close(mci[WRITE]);
+            dup2(in_m,0);
+            dup2(out_m,1);
         
-            execvp(MCC);    /* start mcc reader program */
-            fprintf(stderr, "metric.c: %s could not be executed\n", MCC);
+            execvp(MCI);    /* start mci program */
+            fprintf(stderr, "metric.c: %s could not be executed\n", MCI);
             exit(EXEC_ERROR);
         } else {        /* parent: logger */
-            
+            int to_m, from_m;
+            from_m = logger_m[READ];
+            to_m = mci[WRITE];
+            close(logger_m[WRITE]); /* close unused ends */
+            close(mci[READ]);
+
+            /* 
+               wait for serial input
+               poll mci
+               write to file
+            */
         }
     }
 }
