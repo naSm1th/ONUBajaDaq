@@ -94,7 +94,7 @@ void scanDIO() {
         for (i = 1; i<7; i++) {
             /* add one to the count if the particular bit is 1 */
             /* and the previous value is 0 */
-            counts[i-1] += (((portVal&i) >> (i-1)) && ((prevPortVal&i) >> (i-1)));
+            counts[i-1] += (((portVal&i) >> (i-1)) && !((prevPortVal&i) >> (i-1)));
         }
     }
 }
