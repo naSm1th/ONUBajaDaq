@@ -78,6 +78,7 @@ void exitHandler(int sig) {
 /* reads from DIO, updates counts */
 void scanDIO() {
     int portVal = 0;
+    int prevPortVal = 0;
     int i;
 
     /* configure tristate registers (set all DIO pins to inputs) */
@@ -85,11 +86,15 @@ void scanDIO() {
 
     /* loop until we get the proper signal */
     while(1) {
+        /* store previous reading */
+        prevPortVal = portVal;
         /* read digital inputs */
         portVal = usbDLatchR_USB20X(udev);
 
         for (i = 1; i<7; i++) {
-            counts[i-1] += (portVal&i) >> (i-1);
+            /* add one to the count if the particular bit is 1 */
+            /* and the previous value is 0 */
+            counts[i-1] += (((portVal&i) >> (i-1)) && ((prevPortVal&i) >> (i-1)));
         }
     }
 }
