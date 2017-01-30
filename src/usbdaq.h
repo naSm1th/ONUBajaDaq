@@ -1,5 +1,5 @@
 /*****************************************************************************
- * usbdaq.c - methods to interface with the MCC USB-201 interface            *
+ * usbdaq.h - methods to interface with the MCC USB-201 interface            *
  *                                                                           *
  * Author: Nathanael A. Smith - nasmith@olivet.edu                           *
  *                                                                           *
