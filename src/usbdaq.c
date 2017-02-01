@@ -94,7 +94,8 @@ void scanDIO() {
         for (i = 1; i<=8; i++) {
             /* add one to the count if the particular bit is 1 */
             /* and the previous value is 0 */
-            counts[i-1] += (((portVal&(1<<i-1)) >> (i-1)) && !((prevPortVal&(1<<i-1)) >> (i-1)));
+            counts[i-1] += (((portVal&(1<<i-1)) >> (i-1)) && 
+                    !((prevPortVal&(1<<i-1)) >> (i-1)));
         }
         struct timespec time;
         time.tv_sec = 0;
