@@ -25,7 +25,7 @@
 
 #include "usbdaq.h"
 
-/* the pointer to the shared int for DIO */
+/* the pointer to the shared int array for DIO */
 int *counts;
 /* the pointer to the shared flag for looping */
 int *run;
@@ -91,12 +91,10 @@ void scanDIO() {
         /* read digital inputs */
         portVal = usbDLatchR_USB20X(udev);
 
-        int temp = 0;
-
-        for (i = 1; i<7; i++) {
+        for (i = 1; i<=8; i++) {
             /* add one to the count if the particular bit is 1 */
             /* and the previous value is 0 */
-            temp += (((portVal&i) >> (i-1)) && !((prevPortVal&i) >> (i-1)));
+            counts[i-1] += (((portVal&(1<<i-1)) >> (i-1)) && !((prevPortVal&(1<<i-1)) >> (i-1)));
         }
         struct timespec time;
         time.tv_sec = 0;
