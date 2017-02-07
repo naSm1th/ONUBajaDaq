@@ -18,7 +18,8 @@ mci.o: mci.c
 	gcc -c mci.c
 
 clean:
-	rm *.o daq *.csv
+	rm *.o daq ./*/*.csv
+	rm -r 1*
 
 wrapup:
 	tar -cvf daq.tar *.c *.h daq

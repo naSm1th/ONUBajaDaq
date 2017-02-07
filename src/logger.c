@@ -15,6 +15,8 @@
 #include <string.h>             /* strcpy, strcat, strlen */
 #include <sys/time.h>           /* gettimeofday */
 #include <pthread.h>            /* threading */
+#include <sys/stat.h>           /* stat */
+
 
 #define MAX_READ    50          /* max num chars to read */
 #define MAX_LEN     100         /* max GPS string length */
@@ -65,7 +67,9 @@ main(int argc, char *argv[]) {
     /* file pointer for output */
     FILE *fp;
     int filenum = 1;
-    char filename[8]; 
+    char filename[24]; 
+    int first = 1;
+    char *dirname;
 
     pthread_t thread;
     pthread_attr_t attr;
@@ -82,10 +86,6 @@ main(int argc, char *argv[]) {
     if (pthread_join(thread, NULL)) {
         printf("ERROR in pthread_join()");
     }
-
-    // open new file
-    sprintf(filename, "%03d.csv", filenum);
-    fp = fopen(filename, "a+");
 
     char *rawgps = (char *) malloc(MAX_LEN);
     strcpy(rawgps, waitForSerial());
@@ -109,21 +109,45 @@ main(int argc, char *argv[]) {
             int j, k;
             for (j = 0; j < strlen(csum_str); j++) {
                 // skip checksum
-                if (csum_str[j] != '*')
-                    csum_calc = csum_calc ^ csum_str[j];
-                // exit if at checksum
-                else
+                if (csum_str[j] == '*')
                     break;
+                csum_calc = csum_calc ^ csum_str[j];
                 //printf("%c\n", csum_str[j]);
             }
             //printf("%i = %i\n", csum_calc, csum);
         }
         // if checksum is valid, keep values
         if (csum_calc == csum) {
-            // parse gps string
+            // process gps string
             char *gpsstr = (char *) malloc(MAX_LEN);
-            // date and time
-            strcpy(gpsstr,gpstok[1]);
+            // time hh:mm:ss.ss
+            /* put : in time
+            strncpy(gpsstr,gpstok[1],2);
+            strcat(gpsstr,":");
+            strncpy(gpsstr+3,gpstok[1]+2,2);
+            strcat(gpsstr,":");
+            strncpy(gpsstr+6,gpstok[1]+4,5);
+            */
+            strncpy(gpsstr,gpstok[1],9);
+            
+            // make directory if first time
+            if (first) {
+                // ddmmyy_hhmmss
+                dirname = (char *) malloc(15);
+                strncpy(dirname,gpstok[9],7);
+                strcat(dirname,"_");
+                strncpy(dirname+strlen(gpstok[9])+1,gpsstr,6);
+                struct stat st = {0};
+                if (stat(dirname, &st) == -1) {
+                    mkdir(dirname,0700);
+                }
+                first = 0;
+            }
+            // TO-DO: if greater than _ min
+            // open new file
+            sprintf(filename, "./%s/%03d.csv", dirname, filenum);
+            fp = fopen(filename, "a+");
+            // add comma
             strcat(gpsstr,",");
             // if valid fix, keep coordinates
             if (strcmp(gpstok[2],"A") == 0) {
@@ -135,7 +159,7 @@ main(int argc, char *argv[]) {
             sscanf(gpstok[7], "%lf", &speed);
             speed = speed*6076.0/5280.0;
             snprintf(gpsstr+strlen(gpsstr),MAX_LEN-strlen(gpsstr),"%lf",speed);
-            printf("%s", gpsstr);
+            fprintf(fp, "%s", gpsstr);
             // format for google maps: +40  42.6142', -74  00.4168'
         } else {
             // invalid checksum
