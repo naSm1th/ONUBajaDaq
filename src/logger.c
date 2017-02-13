@@ -66,6 +66,7 @@ main(int argc, char *argv[]) {
     char **gpstok;      // parsed string
     char *csum_str;     // checksum check
     char *gpsstr;       // string to write to file
+    double interval;
 
     // random for testing
     randomnum = 0;
@@ -173,6 +174,7 @@ main(int argc, char *argv[]) {
                     } else {
                         strcat(gpsdate,gpstime);
                         strptime(gpsdate, "%d%m%y%H%M%S", &tm);
+                        interval = difftime(mktime(&tm),newtime);
                         newtime = mktime(&tm);
                         if (difftime(newtime,oldtime) > 60) {
                             oldtime = mktime(&tm);
@@ -195,8 +197,12 @@ main(int argc, char *argv[]) {
                     /* write to file */
                     fprintf(fp, "%s", gpsstr);
                     // read counts from USBDaq
-                    for (i = 0; i < 8; i++) {
-                        fprintf(fp, "%i,", counts[i]);
+                    if (interval > 0) {
+                        for (i = 0; i < 8; i++) {
+                            printf("%lf,", counts[i]/interval);
+                            fprintf(fp, "%lf,", counts[i]/interval);
+                            //counts[i] = 0; // reset counts
+                        }
                     }
                     fprintf(fp, "\n");
                     /* free allocated memory */
