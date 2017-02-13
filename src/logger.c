@@ -185,7 +185,6 @@ main(int argc, char *argv[]) {
                             filenum++;
                             filepath = (char *) malloc(25);
                             sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
-                            printf("%s\n", filepath);
                             fp = fopen(filepath, "a");
                         }
                     }
@@ -199,7 +198,6 @@ main(int argc, char *argv[]) {
                     // read counts from USBDaq
                     if (interval > 0) {
                         for (i = 0; i < 8; i++) {
-                            printf("%lf,", counts[i]/interval);
                             fprintf(fp, "%lf,", counts[i]/interval);
                             //counts[i] = 0; // reset counts
                         }
