@@ -15,20 +15,22 @@
 #include <sys/time.h>           /* time() */
 #include <pthread.h>            /* threading */
 #include <sys/stat.h>           /* stat */
+#include <signal.h>             /* SIGTERM */
+#include <math.h>               /* fabs */
 
 #define MAX_LEN     100         /* max GPS string length */
 #define MAX_TOKENS  13          /* max num tokens in GPS string */
 #define LOG_DIR     "."         /* directory for logs (flash drive) */
 
-int counts[8];
-int done;
+int counts[8];      // usbdaq shared array
+char *dirname;      // directory for session
 
 void *initUSBDaq(void *array);
 
 // temp var to test NMEA strings
 int randomnum;
 char *waitForSerial() {
-    printf("getting gps coordinates...\n");
+    printf("getting GPS coordinates...\n");
     switch (randomnum) {
         case 0:
             randomnum = 1;
@@ -52,12 +54,20 @@ char *waitForSerial() {
     }
 }
 
+static void cleanup(int signum) {
+    printf("\nLogging session terminated\n");
+    free(dirname);
+    fcloseall();
+    /* close thread */
+    pthread_exit(NULL);
+    fflush(stdout);
+}
+
 main(int argc, char *argv[]) {
     FILE *fp;           // output file pointer
     int filenum = 1;    // current file
     char *filepath;     // full file path
     int first = 1;      // boolean for first time
-    char *dirname;      // directory for session
     struct tm tm;       // time for str to time 
     time_t newtime, oldtime;    // times for comparison
     char *gpstime, *gpsdate;  // date and time
@@ -67,6 +77,14 @@ main(int argc, char *argv[]) {
     char *csum_str;     // checksum check
     char *gpsstr;       // string to write to file
     double interval;
+
+    // catch ctrl-C 
+    struct sigaction sa;
+    sa.sa_handler = cleanup;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART; 
+    if (sigaction(SIGINT, &sa, NULL) == -1)
+        perror("Problem with SIGINT catch");
 
     // random for testing
     randomnum = 0;
@@ -88,8 +106,7 @@ main(int argc, char *argv[]) {
         printf("ERROR in pthread_join()");
     }
   
-    done = 0;
-    while (!done) {
+    while (1) {
         rawgps = (char *) malloc(MAX_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
         /* wait for input from GPS */
@@ -192,13 +209,13 @@ main(int argc, char *argv[]) {
                     double speed = 0;
                     sscanf(gpstok[7], "%lf", &speed);
                     speed = speed*6076.0/5280.0;
-                    snprintf(gpsstr+strlen(gpsstr),MAX_LEN-strlen(gpsstr),"%lf",speed);
+                    snprintf(gpsstr+strlen(gpsstr),MAX_LEN-strlen(gpsstr),"%.1lf",speed);
                     /* write to file */
                     fprintf(fp, "%s", gpsstr);
                     // read counts from USBDaq
-                    if (interval > 0) {
+                    if (fabs(interval) > 10e-4) {
                         for (i = 0; i < 8; i++) {
-                            fprintf(fp, "%lf,", counts[i]/interval);
+                            fprintf(fp, ",%lf", counts[i]/interval);
                             //counts[i] = 0; // reset counts
                         }
                     }
@@ -227,9 +244,6 @@ main(int argc, char *argv[]) {
         // for testing
         sleep(1);
     }
-    // catch sig int (threaded)
-    free(dirname);
-    fcloseall();
     /* close thread */
     pthread_exit(NULL);
 }
