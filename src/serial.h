@@ -8,4 +8,7 @@
  * License: MIT License (see LICENSE in project root)                        *
  *****************************************************************************/
 
+/* the serial port to use for GPS UART communication */
+#define SERIALPORT "/dev/ttyS0i"
+
 
