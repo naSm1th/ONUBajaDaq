@@ -51,7 +51,8 @@ void initUSBDaq(int *inCounts) {
     }
 
     /* handle SIGTERM */
-    signal(SIGTERM, exitHandler);
+    //signal(SIGTERM, exitHandler);
+    signal(SIGINT, exitHandler);
 
     /* start reading from DIO */
     scanDIO();
@@ -73,6 +74,8 @@ void exitHandler(int sig) {
     /* reraise signal and die */
     signal(sig, SIG_DFL);
     raise(sig);
+    /* exit thread */
+    pthread_exit(NULL);
 }
 
 /* reads from DIO, updates counts */

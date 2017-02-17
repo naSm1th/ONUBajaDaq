@@ -65,7 +65,14 @@ static void cleanup(int sig) {
     /* raise signal */
     signal(sig, SIG_DFL);
     raise(sig);
+    /* wait for thread */
+    pthread_attr_destroy(&attr);
+    if (pthread_join(thread, NULL)) {
+        printf("ERROR in pthread_join()");
+    }
+
     fflush(stdout);
+    exit(0);
 }
 
 int main(int argc, char *argv[]) {
@@ -88,14 +95,12 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = cleanup;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART; 
-    printf("signal handler");
     if (sigaction(SIGINT, &sa, NULL) == -1)
         perror("Problem with SIGINT catch");
 
     // random for testing
     randomnum = 0;
     
-    printf("here");
     /* thread USB daq */
     pthread_t thread;
     pthread_attr_t attr;
@@ -108,10 +113,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }   
 
-    pthread_attr_destroy(&attr);
-    if (pthread_join(thread, NULL)) {
-        printf("ERROR in pthread_join()");
-    }
     printf("there");
   
     while (1) {
@@ -252,6 +253,4 @@ int main(int argc, char *argv[]) {
         // for testing
         sleep(1);
     }
-    /* close thread */
-    pthread_exit(NULL);
 }
