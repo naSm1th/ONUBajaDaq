@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include <libusb/pmd.h>
 #include <libusb/usb-20X.h>

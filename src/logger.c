@@ -26,6 +26,7 @@
 
 int counts[8];      // usbdaq shared array
 char *dirname;      // directory for session
+pthread_t thread;   // thread for usbdaq
 
 void *initUSBDaq(void *array);
 
@@ -66,7 +67,6 @@ static void cleanup(int sig) {
     signal(sig, SIG_DFL);
     raise(sig);
     /* wait for thread */
-    pthread_attr_destroy(&attr);
     if (pthread_join(thread, NULL)) {
         printf("ERROR in pthread_join()");
     }
@@ -102,7 +102,6 @@ int main(int argc, char *argv[]) {
     randomnum = 0;
     
     /* thread USB daq */
-    pthread_t thread;
     pthread_attr_t attr;
 
     pthread_attr_init(&attr);
@@ -112,8 +111,8 @@ int main(int argc, char *argv[]) {
         printf("ERROR in pthread_create()");
         exit(1);
     }   
-
-    printf("there");
+    /* destroy thread */
+    pthread_attr_destroy(&attr);
   
     while (1) {
         rawgps = (char *) malloc(MAX_LEN);
