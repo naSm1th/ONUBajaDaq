@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = cleanup;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART; 
+    printf("signal handler");
     if (sigaction(SIGINT, &sa, NULL) == -1)
         perror("Problem with SIGINT catch");
 
