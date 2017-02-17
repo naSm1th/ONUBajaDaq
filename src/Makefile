@@ -18,7 +18,7 @@ usbdaq.o: usbdaq.c usbdaq.h
 	gcc -Wall -c usbdaq.c
 
 clean:
-	rm *.o daq 
+	rm -r 1* *.o daq 
 
 wrapup:
 	tar -cvf daq.tar *.c *.h 

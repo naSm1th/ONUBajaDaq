@@ -17,4 +17,5 @@ int initSerial(int writeFD, int readFD) {
 
     /* received data from GPS */
     /* process all data, send to parent process */
+    return 0;
 }

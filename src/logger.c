@@ -56,12 +56,15 @@ char *waitForSerial() {
     }
 }
 
-static void cleanup(int signum) {
+static void cleanup(int sig) {
     printf("\nLogging session terminated\n");
     free(dirname);
     fcloseall();
     /* close thread */
     pthread_exit(NULL);
+    /* raise signal */
+    signal(sig, SIG_DFL);
+    raise(sig);
     fflush(stdout);
 }
 
@@ -218,7 +221,7 @@ int main(int argc, char *argv[]) {
                     if (fabs(interval) > 10e-4) {
                         for (i = 0; i < 8; i++) {
                             fprintf(fp, ",%lf", counts[i]/interval);
-                            //counts[i] = 0; // reset counts
+                            counts[i] = 0; // reset counts
                         }
                     }
                     fprintf(fp, "\n");
