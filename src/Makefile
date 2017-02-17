@@ -1,20 +1,24 @@
 # Makefile for Baja DAQ logger program by Ryan Carl, Nathanael Smith
 
-make: logger.o mci.o
-	gcc -pthread -o daq logger.o mci.o
+make: logger.o serial.o usbdaq.o 
+	gcc -Wall -pthread -lmccusb -lhidapi-libusb -lusb-1.0 -o daq logger.o serial.o usbdaq.o
 
 debug:
-	gcc -g -c logger.c
-	gcc -g -c mci.c
+	gcc -g -c -Wall logger.c
+	gcc -g -c -Wall serial.c
+	gcc -g -c -Wall usbdaq.c
 
 logger.o: logger.c
-	gcc -c logger.c
+	gcc -Wall -c logger.c
 
-mci.o: mci.c
-	gcc -c mci.c
+serial.o: serial.c serial.h
+	gcc -Wall -c serial.c
+
+usbdaq.o: usbdaq.c usbdaq.h
+	gcc -Wall -c usbdaq.c
 
 clean:
-	rm -r 1* *.o daq 
+	rm *.o daq 
 
 wrapup:
-	tar -cvf daq.tar *.c *.h daq
+	tar -cvf daq.tar *.c *.h 
