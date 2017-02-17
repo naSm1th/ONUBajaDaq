@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }   
     /* destroy thread */
-    pthread_attr_destroy(&attr);
+    //pthread_attr_destroy(&attr);
   
     while (1) {
         rawgps = (char *) malloc(MAX_LEN);
