@@ -9,6 +9,7 @@
  * License: MIT License (see LICENSE for more details)                       *
  *****************************************************************************/
 
+#define _GNU_SOURCE
 #include <stdio.h>              /* printf, snprintf */
 #include <stdlib.h>             /* exit */
 #include <string.h>             /* strcpy, strcat, strlen */
@@ -17,6 +18,7 @@
 #include <sys/stat.h>           /* stat */
 #include <signal.h>             /* SIGTERM */
 #include <math.h>               /* fabs */
+#include <unistd.h>             /* sleep() */
 
 #define MAX_LEN     100         /* max GPS string length */
 #define MAX_TOKENS  13          /* max num tokens in GPS string */
@@ -63,7 +65,7 @@ static void cleanup(int signum) {
     fflush(stdout);
 }
 
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     FILE *fp;           // output file pointer
     int filenum = 1;    // current file
     char *filepath;     // full file path
@@ -128,8 +130,8 @@ main(int argc, char *argv[]) {
                 /* checksum calculations */
                 int csum = 0;
                 int csum_calc = 0;
-                if (csum = (int)strtol(gpstok[11]+2, NULL, 16)) {
-                    int j, k;
+                if ((csum = (int)strtol(gpstok[11]+2, NULL, 16))) {
+                    int j;
                     for (j = 0; j < strlen(csum_str); j++) {
                         // skip checksum
                         if (csum_str[j] == '*')
