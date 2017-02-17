@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
     // random for testing
     randomnum = 0;
     
+    printf("here");
     /* thread USB daq */
     pthread_t thread;
     pthread_attr_t attr;
@@ -110,6 +111,7 @@ int main(int argc, char *argv[]) {
     if (pthread_join(thread, NULL)) {
         printf("ERROR in pthread_join()");
     }
+    printf("there");
   
     while (1) {
         rawgps = (char *) malloc(MAX_LEN);
