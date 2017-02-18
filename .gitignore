@@ -52,3 +52,4 @@ dkms.conf
 
 # vim temporary files
 *.swp
+*.swo
