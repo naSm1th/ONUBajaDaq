@@ -19,16 +19,18 @@
 #include <signal.h>             /* SIGTERM */
 #include <math.h>               /* fabs */
 #include <unistd.h>             /* sleep() */
+#include "usbdaq.h"
 
 #define MAX_LEN     100         /* max GPS string length */
 #define MAX_TOKENS  13          /* max num tokens in GPS string */
 #define LOG_DIR     "."         /* directory for logs (flash drive) */
 
+int run;            // flag to run loop in usbdaq.c
 int counts[8];      // usbdaq shared array
 char *dirname;      // directory for session
 pthread_t thread;   // thread for usbdaq
 
-void *initUSBDaq(void *array);
+//void *initUSBDaq(void *array);
 
 // temp var to test NMEA strings
 int randomnum;
@@ -60,18 +62,21 @@ char *waitForSerial() {
 static void cleanup(int sig) {
     printf("\nLogging session terminated\n");
     free(dirname);
+    printf("about to close...\n");
     fcloseall();
-    /* close thread */
-    pthread_exit(NULL);
-    /* raise signal */
-    signal(sig, SIG_DFL);
-    raise(sig);
-    /* wait for thread */
+
+    /* set flag to exit */
+    run = 0;
+
+    printf("about to join thread\n");
+
     if (pthread_join(thread, NULL)) {
         printf("ERROR in pthread_join()");
     }
-
+    
+    printf("about to flush...\n");
     fflush(stdout);
+    printf("about to die...\n");
     exit(0);
 }
 
@@ -90,6 +95,8 @@ int main(int argc, char *argv[]) {
     char *gpsstr;       // string to write to file
     double interval;
 
+    int run = 1;        // flag to continue logging USBdaq data
+
     // catch ctrl-C 
     struct sigaction sa;
     sa.sa_handler = cleanup;
@@ -97,6 +104,7 @@ int main(int argc, char *argv[]) {
     sa.sa_flags = SA_RESTART; 
     if (sigaction(SIGINT, &sa, NULL) == -1)
         perror("Problem with SIGINT catch");
+
 
     // random for testing
     randomnum = 0;
@@ -107,7 +115,12 @@ int main(int argc, char *argv[]) {
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-    if (pthread_create(&thread, &attr, initUSBDaq,(void *)&counts)) {
+    /* create parameter struct */
+    struct usbParams params;
+    params.counts = counts;
+    params.run = &run;
+
+    if (pthread_create(&thread, &attr, initUSBDaq,&params)) {
         printf("ERROR in pthread_create()");
         exit(1);
     }   

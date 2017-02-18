@@ -9,8 +9,14 @@
  *****************************************************************************/
 
 /* initializes and runs the USB DAQ process */
-void initUSBDaq(int *inCounts);
+void *initUSBDaq(void *in);
 /* exit handler to allow for proper termination of device driver */
 void exitHandler(int sig);
 /* constantly reads DIO/updates counts */
 void scanDIO();
+
+/* struct for parameters to initUSBDaq() */
+struct usbParams {
+    int *counts;
+    int *run;
+};
