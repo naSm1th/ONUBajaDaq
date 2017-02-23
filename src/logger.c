@@ -32,6 +32,7 @@ pthread_t thread;   // thread for usbdaq
 
 // temp var to test NMEA strings
 int randomnum;
+
 char *waitForSerial() {
     printf("getting GPS coordinates...\n");
     switch (randomnum) {
@@ -64,7 +65,6 @@ static void cleanup(int sig) {
 
     /* set flag to exit */
     run = 0;
-
 
     if (pthread_join(thread, NULL)) {
         printf("ERROR in pthread_join()");
@@ -105,7 +105,6 @@ int main(int argc, char *argv[]) {
     
     /* thread USB daq */
     pthread_attr_t attr;
-
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
@@ -245,7 +244,7 @@ int main(int argc, char *argv[]) {
                     free(csum_str);
                 } else {
                     // invalid checksum
-                    // TODO: handle invalid checksum 
+                    // TODO: debug indicated invalid checksum 
                     free(rawgps);
                     free(gpstok);
                     free(csum_str);
