@@ -30,8 +30,6 @@ int counts[8];      // usbdaq shared array
 char *dirname;      // directory for session
 pthread_t thread;   // thread for usbdaq
 
-//void *initUSBDaq(void *array);
-
 // temp var to test NMEA strings
 int randomnum;
 char *waitForSerial() {
@@ -62,21 +60,17 @@ char *waitForSerial() {
 static void cleanup(int sig) {
     printf("\nLogging session terminated\n");
     free(dirname);
-    printf("about to close...\n");
     fcloseall();
 
     /* set flag to exit */
     run = 0;
 
-    printf("about to join thread\n");
 
     if (pthread_join(thread, NULL)) {
         printf("ERROR in pthread_join()");
     }
     
-    printf("about to flush...\n");
     fflush(stdout);
-    printf("about to die...\n");
     exit(0);
 }
 

@@ -56,13 +56,13 @@ void *initUSBDaq(void *in) {
     int ret = libusb_init(NULL);
     if (ret < 0) {
         perror("usb_device_find_USB_MCC: Failed to initialize libusb");
-        exit(1);
+        pthread_exit(NULL);
     }
     /* initialize MCC-USB library */
     udev = NULL;
     if (!(udev = usb_device_find_USB_MCC(USB201_PID, NULL))) {
         /* cannot find device; exit */
-        exit(1);
+        pthread_exit(NULL);
     }
 
     /* handle SIGTERM */
@@ -71,7 +71,6 @@ void *initUSBDaq(void *in) {
 
     /* start reading from DIO */
     scanDIO(counts, run);
-    printf("should never reach here...\n");
     fflush(stdout);
     return 0;
 }
@@ -87,7 +86,6 @@ void scanDIO(int *counts, int *run) {
 
     /* loop until we get the proper signal */
     while(*run) {
-        printf("beginning loop\n");
         /* store previous reading */
         prevPortVal = portVal;
         /* read digital inputs */
@@ -106,12 +104,8 @@ void scanDIO(int *counts, int *run) {
         nanosleep(&time, &time);
         fflush(stdout);
     }
-    printf("about to clean up driver...\n");
     fflush(stdout);
     /* we are done */
     /* clean up device driver */
     cleanup_USB20X(udev);
-    printf("cleaned up driver...\n");
-    /* exit thread */
-    //pthread_exit(NULL);
 }
