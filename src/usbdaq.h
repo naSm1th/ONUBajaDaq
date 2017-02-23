@@ -13,7 +13,7 @@ void *initUSBDaq(void *in);
 /* exit handler to allow for proper termination of device driver */
 void exitHandler(int sig);
 /* constantly reads DIO/updates counts */
-void scanDIO();
+void scanDIO(int *counts, int *run);
 
 /* struct for parameters to initUSBDaq() */
 struct usbParams {

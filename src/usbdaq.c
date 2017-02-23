@@ -26,9 +26,9 @@
 #include "usbdaq.h"
 
 /* the pointer to the shared int array for DIO */
-int *counts;
+//int *counts;
 /* the pointer to the shared flag for looping */
-int *run;
+//int *run;
 /* the handle to the udev device */
 libusb_device_handle *udev = NULL;
 /* tracks if we are currently handling a signal */
@@ -36,11 +36,13 @@ volatile sig_atomic_t sigInProgress = 0;
 
 /* initializes and runs the process for the USB DAQ interface */
 void *initUSBDaq(void *in) {
-    struct usbParams *params = (struct usbParams *) in;
+    int *counts, *run;
+    struct usbParams *params = in;
     /* save reference to our array of counts */
-    counts = (*params).counts;
+    counts = params->counts;
+ 
     /* save reference to our run flag */
-    run = (*params).run;
+    run = params->run;
 
     /* block SIGINT in this thread */
     sigset_t set;
@@ -68,14 +70,14 @@ void *initUSBDaq(void *in) {
     //signal(SIGINT, exitHandler);
 
     /* start reading from DIO */
-    scanDIO();
+    scanDIO(counts, run);
     printf("should never reach here...\n");
     fflush(stdout);
     return 0;
 }
 
 /* reads from DIO, updates counts */
-void scanDIO() {
+void scanDIO(int *counts, int *run) {
     int portVal = 0;
     int prevPortVal = 0;
     int i;
@@ -90,18 +92,18 @@ void scanDIO() {
         prevPortVal = portVal;
         /* read digital inputs */
         portVal = usbDLatchR_USB20X(udev);
-
+        
+        int temp = 0;
         for (i = 1; i<=8; i++) {
             /* add one to the count if the particular bit is 1 */
             /* and the previous value is 0 */
-            counts[i-1] += (((portVal&(1<<i-1)) >> (i-1)) && 
-                    !((prevPortVal&(1<<i-1)) >> (i-1)));
+            /*counts[i-1]*/temp += (((portVal&(1<<(i-1))) >> (i-1)) && 
+                    !((prevPortVal&(1<<(i-1))) >> (i-1)));
         }
         struct timespec time;
         time.tv_sec = 0;
         time.tv_nsec = 100000000L;
         nanosleep(&time, &time);
-        printf("looping %d....", *run);
         fflush(stdout);
     }
     printf("about to clean up driver...\n");

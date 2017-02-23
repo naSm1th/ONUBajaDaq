@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     char *gpsstr;       // string to write to file
     double interval;
 
-    int run = 1;        // flag to continue logging USBdaq data
+    run = 1;        // flag to continue logging USBdaq data
 
     // catch ctrl-C 
     struct sigaction sa;
@@ -120,12 +120,12 @@ int main(int argc, char *argv[]) {
     params.counts = counts;
     params.run = &run;
 
-    if (pthread_create(&thread, &attr, initUSBDaq,&params)) {
+    if (pthread_create(&thread, &attr, initUSBDaq, &params)) {
         printf("ERROR in pthread_create()");
         exit(1);
     }   
     /* destroy thread */
-    //pthread_attr_destroy(&attr);
+    pthread_attr_destroy(&attr);
   
     while (1) {
         rawgps = (char *) malloc(MAX_LEN);
@@ -234,11 +234,12 @@ int main(int argc, char *argv[]) {
                     /* write to file */
                     fprintf(fp, "%s", gpsstr);
                     // read counts from USBDaq
-                    if (fabs(interval) > 10e-4) {
+                    if (interval > 10e-4) {
                         for (i = 0; i < 8; i++) {
                             fprintf(fp, ",%lf", counts[i]/interval);
-                            counts[i] = 0; // reset counts
+                            //counts[i] = 0; // reset counts
                         }
+                        memset(counts, 0, sizeof(int)*8);
                     }
                     fprintf(fp, "\n");
                     /* free allocated memory */

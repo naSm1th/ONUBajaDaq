@@ -7,6 +7,8 @@ debug:
 	gcc -g -c -Wall logger.c
 	gcc -g -c -Wall serial.c
 	gcc -g -c -Wall usbdaq.c
+	gcc -Wall -pthread -lmccusb -lhidapi-libusb -lusb-1.0 -o daq logger.o serial.o usbdaq.o
+
 
 logger.o: logger.c
 	gcc -Wall -c logger.c
