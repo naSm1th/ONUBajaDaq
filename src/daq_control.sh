@@ -20,7 +20,7 @@ if [ -n start ]; then
     # wait for mount to finish
     wait $pid
     if [ $? -eq 0 ]; then # if success
-        if [ -f prog ]; then
+        if [ -f $prog ]; then
             "./$prog"
         else
             echo "$prog does not exist"
