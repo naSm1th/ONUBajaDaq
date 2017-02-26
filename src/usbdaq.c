@@ -44,10 +44,10 @@ void *initUSBDaq(void *in) {
     /* save reference to our run flag */
     run = params->run;
 
-    /* block SIGINT in this thread */
+    /* block SIGSTOP in this thread */
     sigset_t set;
     sigemptyset(&set);
-    sigaddset(&set, SIGINT);
+    sigaddset(&set, SIGSTOP);
     if (pthread_sigmask(SIG_BLOCK, &set, NULL)) {
         perror("Error in pthread_sigmask()\n");
     }
@@ -64,10 +64,6 @@ void *initUSBDaq(void *in) {
         /* cannot find device; exit */
         pthread_exit(NULL);
     }
-
-    /* handle SIGTERM */
-    //signal(SIGTERM, exitHandler);
-    //signal(SIGINT, exitHandler);
 
     /* start reading from DIO */
     scanDIO(counts, run);

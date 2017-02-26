@@ -34,7 +34,6 @@ pthread_t thread;   // thread for usbdaq
 int randomnum;
 
 char *waitForSerial() {
-    printf("getting GPS coordinates...\n");
     switch (randomnum) {
         case 0:
             randomnum = 1;
@@ -59,17 +58,13 @@ char *waitForSerial() {
 }
 
 static void cleanup(int sig) {
-    printf("\nLogging session terminated\n");
     free(dirname);
     fcloseall();
-
     /* set flag to exit */
     run = 0;
-
     if (pthread_join(thread, NULL)) {
         printf("ERROR in pthread_join()");
     }
-    
     fflush(stdout);
     exit(0);
 }
@@ -96,8 +91,8 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = cleanup;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART; 
-    if (sigaction(SIGINT, &sa, NULL) == -1)
-        perror("Problem with SIGINT catch");
+    if (sigaction(SIGSTOP, &sa, NULL) == -1)
+        perror("Problem with SIGSTOP catch");
 
 
     // random for testing
@@ -119,6 +114,8 @@ int main(int argc, char *argv[]) {
     }   
     /* destroy thread */
     pthread_attr_destroy(&attr);
+
+    // init serial
   
     while (1) {
         rawgps = (char *) malloc(MAX_LEN);
