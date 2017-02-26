@@ -12,14 +12,12 @@ DIR="/mnt/bajadaq"
 if [ ! -d "$DIR" ]; then
     # mount
     sudo mkdir "$DIR"
-    msg="$(sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR)"
-    if [ -n "$msg" ]; then
+    sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR)
+    # check for success
+    if [ !(mount | grep "$DIR"> /dev/null) ]; then
         sudo rm -rf "$DIR"
     fi
 else
     # unmount
-    msg="$(sudo umount $DIR)"
-    if [ -z "$msg" ]; then
-        sudo rm -rf "$DIR"
-    fi
+    sudo umount $DIR
 fi
