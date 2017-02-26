@@ -12,7 +12,7 @@ DIR="/mnt/bajadaq"
 if [ ! -d "$DIR" ]; then
     # mount
     sudo mkdir "$DIR"
-    sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR)
+    sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR
     # check for success
     if [ !(mount | grep "$DIR"> /dev/null) ]; then
         sudo rm -rf "$DIR"
