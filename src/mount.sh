@@ -16,6 +16,7 @@ if [ ! -d "$DIR" ]; then
     # check for failure 
     if ! mount | grep "$DIR"> /dev/null; then
         sudo rm -rf "$DIR"
+        exit 1 # return error
     fi
 else
     # unmount
@@ -23,5 +24,7 @@ else
     # check for success
     if ! mount | grep "$DIR"> /dev/null; then
         sudo rm -rf "$DIR"
+    else
+        exit 1 # return error
     fi
 fi
