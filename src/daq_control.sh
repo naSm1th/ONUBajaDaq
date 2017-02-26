@@ -21,7 +21,14 @@ if [ -n start ]; then
     wait $pid
     if [ $? -eq 0 ]; then # if success
         if [ -f $prog ]; then
-            "./$prog"
+            "./$prog" &
+            pid=$!
+            echo "$prog PID: $pid"
+            # listen for button press
+            read stop
+            if [ -n stop ]; then
+                kill -2 $pid
+            fi
         else
             echo "$prog does not exist"
         fi
