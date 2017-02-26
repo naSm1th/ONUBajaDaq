@@ -17,5 +17,6 @@ if [ ! -d "$DIR" ]; then
 else
     # unmount
     msg="$(sudo umount $DIR)"
+    sudo rm -rf "$DIR"
     echo "$msg"
 fi
