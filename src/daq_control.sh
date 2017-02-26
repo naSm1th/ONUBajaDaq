@@ -21,8 +21,10 @@ if [ -n start ]; then
     wait $pid
     if [ $? -eq 0 ]; then # if success
         if [ -f prog ]; then
-            "./$prog" &
+            "./$prog"
         fi
+    else
+        echo "Mounting error"
     fi
 else
     echo "Logging session aborted"
