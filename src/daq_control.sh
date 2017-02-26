@@ -17,10 +17,12 @@ if [ -n start ]; then
     echo "Logging session initiated"
     $mount &
     pid=$!
+    # wait for mount to finish
     wait $pid
-    echo $? 
-    if [ -e prog && -x prog]; then
-        "./$prog" &
+    if [ $? -eq 0 ]; then # if success
+        if [ -f prog ]; then
+            "./$prog" &
+        fi
     fi
 else
     echo "Logging session aborted"
