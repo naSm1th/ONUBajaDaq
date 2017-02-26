@@ -34,7 +34,6 @@ pthread_t thread;   // thread for usbdaq
 int randomnum;
 
 char *waitForSerial() {
-    printf("getting GPS coordinates...\n");
     switch (randomnum) {
         case 0:
             randomnum = 1;
@@ -121,6 +120,7 @@ int main(int argc, char *argv[]) {
     pthread_attr_destroy(&attr);
   
     while (1) {
+        printf("logging...\n");
         rawgps = (char *) malloc(MAX_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
         /* wait for input from GPS */
