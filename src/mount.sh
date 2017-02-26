@@ -7,10 +7,11 @@
 # Copyright 2017 Nathanael A. Smith & Ryan Carl
 # License: MIT License (see LICENSE for more details)
 
-DIR="/media/bajadaq"
+DIR="/mnt/bajadaq"
 
 if [ ! -d "$DIR" ]; then
     # mount
+    mkdir "$DIR"
     msg="$(sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR)"
     echo "$msg"
 else
