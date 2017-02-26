@@ -28,6 +28,7 @@ if [ -n start ]; then
             read stop
             if [ -n stop ]; then
                 kill -2 $pid
+                wait $pid
             fi
         else
             echo "$prog does not exist"
