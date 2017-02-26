@@ -17,7 +17,8 @@ if [ -n start ]; then
     echo "Logging session initiated"
     $mount &
     pid=$!
-    echo wait $pid
+    wait $pid
+    echo $? 
     if [ -e prog && -x prog]; then
         "./$prog" &
     fi
