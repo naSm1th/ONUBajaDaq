@@ -12,9 +12,9 @@ mount="./mount.sh"
 
 # listen for button press
 read start
-
-if [ -n start ]; then
+if [ -n $start ]; then
     echo "Logging session initiated"
+    # mount USB
     $mount &
     pid=$!
     # wait for mount to finish
@@ -23,12 +23,19 @@ if [ -n start ]; then
         if [ -f $prog ]; then
             "./$prog" &
             pid=$!
-            echo "$prog PID: $pid"
             # listen for button press
             read stop
-            if [ -n stop ]; then
+            if [ -n $stop ]; then
                 kill -2 $pid
                 wait $pid
+                # umount usb
+                $mount &
+                pid=$!
+                # wait for umount to finish
+                wait $pid
+                if [ $? -eq 0 ]; then # if success
+                    echo "Logging session terminated"
+                fi
             fi
         else
             echo "$prog does not exist"
