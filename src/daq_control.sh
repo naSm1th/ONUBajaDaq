@@ -7,15 +7,18 @@
 # Copyright 2017 Nathanael A. Smith & Ryan Carl
 # License: MIT License (see LICENSE for more details)
 
-DIR="/mnt/bajadaq"
+prog="./daq"
+mount="./mount.sh"
 
-if [ ! -d "$DIR" ]; then
-    # mount
-    sudo mkdir "$DIR"
-    msg="$(sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR)"
+# listen for button press
+read start
+
+if [ -n start ]; then
+    echo "Logging session initiated\n"
+    ($mount &)
+    pid=$!
+    (wait $pid)
+    ($prog &)
 else
-    # unmount
-    msg="$(sudo umount $DIR)"
-    sudo rm -rf "$DIR"
-    echo "$msg"
+    echo "Logging session aborted\n"
 fi
