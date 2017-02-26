@@ -22,6 +22,8 @@ if [ -n start ]; then
     if [ $? -eq 0 ]; then # if success
         if [ -f prog ]; then
             "./$prog"
+        else
+            echo "$prog does not exist"
         fi
     else
         echo "Mounting error"
