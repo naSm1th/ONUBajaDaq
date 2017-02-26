@@ -13,11 +13,14 @@ if [ ! -d "$DIR" ]; then
     # mount
     sudo mkdir "$DIR"
     sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR
-    # check for success
+    # check for failure 
     if ! mount | grep "$DIR"> /dev/null; then
         sudo rm -rf "$DIR"
     fi
 else
     # unmount
-    sudo umount $DIR
+    sudo umount "$DIR"
+    # check for success
+    if ! mount | grep "$DIR"> /dev/null; then
+        sudo rm -rf "$DIR"
 fi
