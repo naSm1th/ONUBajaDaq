@@ -16,6 +16,6 @@ if [ ! -d "$DIR" ]; then
     echo "$msg"
 else
     # unmount
-    msg="$(sudo unmount $DIR)"
+    msg="$(sudo umount $DIR)"
     echo "$msg"
 fi
