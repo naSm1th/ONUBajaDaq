@@ -23,4 +23,5 @@ else
     # check for success
     if ! mount | grep "$DIR"> /dev/null; then
         sudo rm -rf "$DIR"
+    fi
 fi
