@@ -14,7 +14,7 @@ if [ ! -d "$DIR" ]; then
     sudo mkdir "$DIR"
     sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR
     # check for success
-    if [ !(mount | grep "$DIR"> /dev/null) ]; then
+    if ! [ mount | grep "$DIR"> /dev/null ]; then
         sudo rm -rf "$DIR"
     fi
 else
