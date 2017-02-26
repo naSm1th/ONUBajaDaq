@@ -13,9 +13,13 @@ if [ ! -d "$DIR" ]; then
     # mount
     sudo mkdir "$DIR"
     msg="$(sudo mount -t vfat -o uid=logger,gid=logger /dev/sda1 $DIR)"
+    if [ -n "$msg" ]; then
+        sudo rm -rf "$DIR"
+    fi
 else
     # unmount
     msg="$(sudo umount $DIR)"
-    sudo rm -rf "$DIR"
-    echo "$msg"
+    if [ -z "$msg" ]; then
+        sudo rm -rf "$DIR"
+    fi
 fi
