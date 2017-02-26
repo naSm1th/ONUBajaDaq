@@ -7,18 +7,20 @@
 # Copyright 2017 Nathanael A. Smith & Ryan Carl
 # License: MIT License (see LICENSE for more details)
 
-prog="./daq"
+prog="daq"
 mount="./mount.sh"
 
 # listen for button press
 read start
 
 if [ -n start ]; then
-    echo "Logging session initiated\n"
-    ($mount &)
+    echo "Logging session initiated"
+    $mount &
     pid=$!
-    (wait $pid)
-    ($prog &)
+    echo wait $pid
+    if [ -e prog && -x prog]; then
+        "./$prog" &
+    fi
 else
-    echo "Logging session aborted\n"
+    echo "Logging session aborted"
 fi
