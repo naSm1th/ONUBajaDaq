@@ -26,7 +26,7 @@ if [ -n $start ]; then
             # listen for button press
             read stop
             if [ -n $stop ]; then
-                kill -2 $pid
+                kill -19 $pid
                 wait $pid
                 # umount usb
                 $mount &
