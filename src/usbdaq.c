@@ -44,10 +44,10 @@ void *initUSBDaq(void *in) {
     /* save reference to our run flag */
     run = params->run;
 
-    /* block SIGSTOP in this thread */
+    /* block SIGINT in this thread */
     sigset_t set;
     sigemptyset(&set);
-    sigaddset(&set, SIGSTOP);
+    sigaddset(&set, SIGINT);
     if (pthread_sigmask(SIG_BLOCK, &set, NULL)) {
         perror("Error in pthread_sigmask()\n");
     }
