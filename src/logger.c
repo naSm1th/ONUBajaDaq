@@ -108,16 +108,19 @@ int main(int argc, char *argv[]) {
     params.counts = counts;
     params.run = &run;
 
+    /*
     if (pthread_create(&thread, &attr, initUSBDaq, &params)) {
         printf("ERROR in pthread_create()");
         exit(1);
     }   
-    /* destroy thread */
-    pthread_attr_destroy(&attr);
+     destroy thread */
+    //pthread_attr_destroy(&attr);
 
     // init serial
   
-    while (1) {
+    dirname = "112233_445566"
+    printf("%i\n", sizeof(LOG_DIR) + sizeof(dirname));
+    while (0) {
         printf("logging...\n");
         rawgps = (char *) malloc(MAX_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
@@ -193,7 +196,7 @@ int main(int argc, char *argv[]) {
                         oldtime = mktime(&tm);
                         newtime = mktime(&tm);
                         // open new file
-                        filepath = (char *) malloc(25);
+                        filepath = (char *) malloc(sizeof(LOG_DIR)+sizeof(dirname)+10);
                         sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
