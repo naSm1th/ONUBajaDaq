@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
 
     // init serial
   
-    while (0) {
+    while (1) {
         printf("logging...\n");
         rawgps = (char *) malloc(MAX_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
