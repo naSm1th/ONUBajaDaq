@@ -183,18 +183,23 @@ int main(int argc, char *argv[]) {
                         strcat(dirname,"_");
                         strncat(dirname,gpstime,6);
                         strptime(dirname, "%d%m%y_%H%M%S", &tm);
-                        struct stat st = {0};
-                        // make new directory
-                        if (stat(dirname, &st) == -1) {
-                            mkdir(dirname,0700);
-                        }
                         first = 0; 
                         // set time for update
                         oldtime = mktime(&tm);
                         newtime = mktime(&tm);
                         // open new file
                         filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
-                        sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
+                        //sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
+                        sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
+                        struct stat st = {0};
+                        // make new directory
+                        if (stat(filepath, &st) == -1) {
+                            if (mkdir(filepath,0700))
+				perror("mkdir");
+                        } else {
+			    printf("file exists!");
+			}
+			sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
                         fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
