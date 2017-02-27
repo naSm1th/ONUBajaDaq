@@ -24,7 +24,7 @@ def connect_type(word_list):
 
 # Change to your own account information
 # Account Information
-to = 'nthepianoman@gmail.com,rcarl94@gmail.com' # Email to send to.
+to = 'nthepianoman@gmail.com, rcarl94@gmail.com' # Email to send to.
 gmail_user = 'onubajadaq@gmail.com' # Email to send from. (MUST BE GMAIL)
 gmail_password = 'onub@j@d@q' # Gmail password.
 smtpserver = smtplib.SMTP('smtp.gmail.com', 587) # Server to use.
@@ -66,6 +66,6 @@ msg['Subject'] = 'IPs For ONUBajaDaq Raspberry Pi on %s' % today.strftime('%b %d
 msg['From'] = gmail_user
 msg['To'] = to
 # Sends the message
-smtpserver.sendmail(gmail_user, [to], msg.as_string())
+smtpserver.sendmail(gmail_user, to.split(","), msg.as_string())
 # Closes the smtp server.
 smtpserver.quit()
