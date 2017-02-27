@@ -20,7 +20,7 @@ usbdaq.o: usbdaq.c usbdaq.h
 	gcc -Wall -c usbdaq.c
 
 clean:
-	rm -r 1* *.o daq 
+	rm *.o daq 
 
 wrapup:
 	tar -cvf daq.tar *.c *.h 
