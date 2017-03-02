@@ -15,11 +15,13 @@ read start
 if [ -n $start ]; then
     echo "Logging session initiated"
     # mount USB
-    $mount &
-    pid=$!
+    $mount
+    #pid=$!
     # wait for mount to finish
-    wait $pid
-    if [ $? -eq 0 ]; then # if success
+    #wait $pid
+    status = $?
+    echo $status
+    if [ $status -eq 0 ]; then # if success
         if [ -f $prog ]; then
             "./$prog" &
             pid=$!
@@ -39,6 +41,7 @@ if [ -n $start ]; then
             fi
         else
             echo "$prog does not exist"
+            $mount
         fi
     else
         echo "Mounting error"
