@@ -12,7 +12,7 @@ GPIO.setup(button, GPIO.IN, GPIO.PUD_UP)
 while True:
     button_state = GPIO.input(button)
     time.sleep(3)
-    return
+    break 
     """
     if button_state == GPIO.HIGH:
         print ("H")
