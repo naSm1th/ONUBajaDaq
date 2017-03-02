@@ -195,11 +195,9 @@ int main(int argc, char *argv[]) {
                         // make new directory
                         if (stat(filepath, &st) == -1) {
                             if (mkdir(filepath,0700))
-				perror("mkdir");
-                        } else {
-			    printf("file exists!");
-			}
-			sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
+				                perror("mkdir");
+                        } 
+			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
                         fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);

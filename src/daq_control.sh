@@ -16,11 +16,7 @@ if [ -n $start ]; then
     echo "Logging session initiated"
     # mount USB
     $mount
-    #pid=$!
-    # wait for mount to finish
-    #wait $pid
-    status = $?
-    echo $status
+    status=$?
     if [ $status -eq 0 ]; then # if success
         if [ -f $prog ]; then
             "./$prog" &
@@ -37,6 +33,8 @@ if [ -n $start ]; then
                 wait $pid
                 if [ $? -eq 0 ]; then # if success
                     echo "Logging session terminated"
+                else
+                    $mount
                 fi
             fi
         else
