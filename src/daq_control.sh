@@ -9,41 +9,36 @@
 
 prog="daq"
 mount="./mount.sh"
+wait4bp="./waitforpress.py"
 
 # listen for button press
-read start
-if [ -n $start ]; then
-    echo "Logging session initiated"
-    # mount USB
-    $mount
-    status=$?
-    if [ $status -eq 0 ]; then # if success
-        if [ -f $prog ]; then
-            "./$prog" &
-            pid=$!
-            # listen for button press
-            read stop
-            if [ -n $stop ]; then
-                kill -2 $pid
-                wait $pid
-                # umount usb
-                $mount &
-                pid=$!
-                # wait for umount to finish
-                wait $pid
-                if [ $? -eq 0 ]; then # if success
-                    echo "Logging session terminated"
-                else
-                    $mount
-                fi
-            fi
+$wait4bp
+echo "Logging session initiated"
+# mount USB
+$mount
+status=$?
+if [ $status -eq 0 ]; then # if success
+    if [ -f $prog ]; then
+        "./$prog" &
+        pid=$!
+        # listen for button press
+        $wait4bp
+        kill -2 $pid
+        wait $pid
+        # umount usb
+        $mount &
+        pid=$!
+        # wait for umount to finish
+        wait $pid
+        if [ $? -eq 0 ]; then # if success
+            echo "Logging session terminated"
         else
-            echo "$prog does not exist"
             $mount
         fi
     else
-        echo "Mounting error"
+        echo "$prog does not exist"
+        $mount
     fi
 else
-    echo "Logging session aborted"
+    echo "Mounting error"
 fi

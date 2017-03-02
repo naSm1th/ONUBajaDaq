@@ -191,12 +191,9 @@ int main(int argc, char *argv[]) {
                         filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
                         //sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
                         sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
-                        struct stat st = {0};
                         // make new directory
-                        if (stat(filepath, &st) == -1) {
-                            if (mkdir(filepath,0700))
-				                perror("mkdir");
-                        } 
+                        if (mkdir(filepath,0700))
+                            perror("mkdir in logger.c");
 			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header

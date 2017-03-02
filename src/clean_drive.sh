@@ -1,5 +1,7 @@
 #!/bin/sh
 
 ./mount.sh
-rm -rf /mnt/bajadaq/130998_081836/
+more /mnt/bajadaq/1*/
+read ok
+rm -rf /mnt/bajadaq/1*/
 ./mount.sh
