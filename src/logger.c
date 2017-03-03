@@ -23,8 +23,8 @@
 
 #define MAX_LEN     100         /* max GPS string length */
 #define MAX_TOKENS  13          /* max num tokens in GPS string */
-#define LOG_DIR     "/mnt/bajadaq"         /* directory for logs (flash drive) */
-#define LOG_LEVEL       "logger.c"
+#define LOG_DIR     "/mnt/bajadaq"  /* directory for logs (flash drive) */
+#define LOG_LEVEL       "logger.c"  /* name of file for logging */
 
 int run;            // flag to run loop in usbdaq.c
 int counts[8];      // usbdaq shared array
