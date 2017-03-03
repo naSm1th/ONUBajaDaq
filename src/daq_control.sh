@@ -10,10 +10,10 @@
 log_level="onubajadaq"     # name of main program
 daqc="daq"        # name of executable c file
 mount="mount.sh"  # name of usb mount script
-wait4bp="waitforpress.py" # name of python GPIO button script
+wait4bp="python waitforpress.py" # name of python GPIO button script
 
 # listen for button press
-"python $wait4bp"
+$wait4bp
 echo "$log_level: Logging session initiated"
 # mount USB
 "./$mount"
@@ -23,7 +23,7 @@ if [ $status -eq 0 ]; then # if success
         "./$daqc" &
         pid=$!
         # listen for button press
-        # "python $wait4bp"
+        # $wait4bp
         read stop
         kill -2 $pid
         wait $pid

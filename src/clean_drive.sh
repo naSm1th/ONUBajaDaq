@@ -1,7 +1,8 @@
 #!/bin/sh
 
 ./mount.sh
-more /mnt/bajadaq/1*/
+echo "Are you sure you want to remove the following?"
+ls /mnt/bajadaq/*/
 read ok
-rm -rf /mnt/bajadaq/1*/
+rm -rf /mnt/bajadaq/*/
 ./mount.sh
