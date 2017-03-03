@@ -7,15 +7,15 @@
 # Copyright 2017 Nathanael A. Smith & Ryan Carl
 # License: MIT License (see LICENSE for more details)
 
-daqsh="onubajadaq"     # name of main program
+log_level="onubajadaq"     # name of main program
 daqc="daq"        # name of executable c file
-mount="./mount.sh"  # command for usb mount script
+mount="mount.sh"  # command for usb mount script
 # command for python GPIO button script
 wait4bp="python waitforpress.py"
 
 # listen for button press
 $wait4bp
-echo "$daqsh: Logging session initiated"
+echo "$log_level: Logging session initiated"
 # mount USB
 $mount
 status=$?
@@ -28,20 +28,24 @@ if [ $status -eq 0 ]; then # if success
         read stop
         kill -2 $pid
         wait $pid
-        # umount usb
-        $mount &
-        pid=$!
-        # wait for umount to finish
-        wait $pid
         if [ $? -eq 0 ]; then # if success
-            echo "$daqsh: Logging session terminated"
+            "./$mount" # umount usb
+            if [ $? -eq 0 ]; then # if success
+                echo "$log_level: Logging session terminated"
+            else
+                echo "$log_level: error in $mount"
+            fi
         else
-            $mount
+            # show error on LED
+            echo "$log_level: error in $daqc"
+            "./$mount" # umount usb
         fi
     else
-        echo "$daqsh: $daqc does not exist"
-        $mount
+        # show error on LED
+        echo "$log_level: $daqc does not exist"
+        "./$mount" # umount usb
     fi
 else
-    echo "$daqsh: Mounting error"
+    # show error on LED
+    echo "$log_level: Mounting error"
 fi

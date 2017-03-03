@@ -24,6 +24,7 @@
 #define MAX_LEN     100         /* max GPS string length */
 #define MAX_TOKENS  13          /* max num tokens in GPS string */
 #define LOG_DIR     "/mnt/bajadaq"         /* directory for logs (flash drive) */
+#define LOG_LEVEL       "logger.c"
 
 int run;            // flag to run loop in usbdaq.c
 int counts[8];      // usbdaq shared array
@@ -63,7 +64,7 @@ static void cleanup(int sig) {
     /* set flag to exit */
     run = 0;
     if (pthread_join(thread, NULL)) {
-        printf("ERROR in pthread_join()");
+        fprintf(stderr, "%s: error in pthread_join", LOG_LEVEL);
     }
     fflush(stdout);
     exit(0);
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]) {
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART; 
     if (sigaction(SIGINT, &sa, NULL) == -1)
-        perror("Problem with SIGINT catch");
+        fprintf(stderr, "%s: problem with SIGINT catch", LOG_LEVEL);
 
 
     // random for testing
@@ -109,7 +110,7 @@ int main(int argc, char *argv[]) {
     params.run = &run;
 
     if (pthread_create(&thread, &attr, initUSBDaq, &params)) {
-        printf("ERROR in pthread_create()");
+        fprintf(stderr, "%s: error in pthread_create", LOG_LEVEL);
         exit(1);
     }   
     /* destroy thread */
@@ -118,7 +119,7 @@ int main(int argc, char *argv[]) {
     // init serial
   
     while (1) {
-        printf("logging...\n");
+        printf("%s: logging...\n", LOG_LEVEL);
         rawgps = (char *) malloc(MAX_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
         /* wait for input from GPS */
@@ -193,7 +194,7 @@ int main(int argc, char *argv[]) {
                         sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
                         // make new directory
                         if (mkdir(filepath,0700))
-                            perror("mkdir in logger.c");
+                            fprintf(stderr, "%s: log file already exists", LOG_LEVEL);
 			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
