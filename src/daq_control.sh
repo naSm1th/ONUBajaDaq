@@ -9,7 +9,7 @@
 
 prog="daq"
 mount="./mount.sh"
-wait4bp="./waitforpress.py"
+wait4bp="python waitforpress.py"
 
 # listen for button press
 $wait4bp
