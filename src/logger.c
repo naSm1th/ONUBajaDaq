@@ -83,7 +83,8 @@ int main(int argc, char *argv[]) {
     char **gpstok;      // parsed string
     char *csum_str;     // checksum check
     char *gpsstr;       // string to write to file
-    double interval;
+    double interval;	// interval for usb daq counts
+    int cw;		// fprintf return val
 
     run = 1;        // flag to continue logging USBdaq data
 
@@ -198,7 +199,9 @@ int main(int argc, char *argv[]) {
 			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
-                        fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
+                        cw = fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
+			            if (cw < 0) // problem writing to flash drive
+                            raise(SIGINT);
                         // format for google maps: +40  42.6142', -74  00.4168'
                         fprintf(fp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
                     } else {
