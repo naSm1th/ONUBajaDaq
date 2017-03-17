@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
                     /* write to file */
                     cw++;
                     fprintf(fp, "%s", gpsstr);
-                    if (cw < 0) // problem writing to flash drive
+                    if (cw > 3) // problem writing to flash drive
                         raise(SIGINT);
                     // read counts from USBDaq
                     if (interval > 10e-4) {
