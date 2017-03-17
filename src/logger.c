@@ -119,7 +119,6 @@ int main(int argc, char *argv[]) {
 
     // init serial
   
-    cw = 0;
     while (1) {
         printf("%s: logging...\n", LOG_LEVEL);
         rawgps = (char *) malloc(MAX_LEN);
@@ -205,6 +204,8 @@ int main(int argc, char *argv[]) {
                             raise(SIGINT);
                         // format for google maps: +40  42.6142', -74  00.4168'
                         fprintf(fp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
+			            if (cw < 0) // problem writing to flash drive
+                            raise(SIGINT);
                     } else {
                         strcat(gpsdate,gpstime);
                         strptime(gpsdate, "%d%m%y%H%M%S", &tm);
@@ -228,19 +229,22 @@ int main(int argc, char *argv[]) {
                     speed = speed*6076.0/5280.0;
                     snprintf(gpsstr+strlen(gpsstr),MAX_LEN-strlen(gpsstr),"%.1lf",speed);
                     /* write to file */
-                    cw++;
                     fprintf(fp, "%s", gpsstr);
-                    if (cw > 3) // problem writing to flash drive
+                    if (cw < 0) // problem writing to flash drive
                         raise(SIGINT);
                     // read counts from USBDaq
                     if (interval > 10e-4) {
                         for (i = 0; i < 8; i++) {
                             fprintf(fp, ",%lf", counts[i]/interval);
+                            if (cw < 0) // problem writing to flash drive
+                                raise(SIGINT);
                             //counts[i] = 0; // reset counts
                         }
                         memset(counts, 0, sizeof(int)*8);
                     }
                     fprintf(fp, "\n");
+                    if (cw < 0) // problem writing to flash drive
+                        raise(SIGINT);
                     /* free allocated memory */
                     free(gpsdate);
                     free(gpstime);
