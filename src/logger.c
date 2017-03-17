@@ -194,7 +194,6 @@ int main(int argc, char *argv[]) {
                         filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
                         //sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
                         sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
-                        printf("%s\n",filepath);
                         // make new directory
                         if (mkdir(filepath,0700))
                             fprintf(stderr, "%s: log directory could not be created", LOG_LEVEL);
@@ -202,9 +201,7 @@ int main(int argc, char *argv[]) {
                         fp = fopen(filepath, "a");
                         // insert file header
                         fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
-                        cw++;
-                        printf("%d\n", cw);
-			            if (cw > 3) // problem writing to flash drive
+			            if (cw < 0) // problem writing to flash drive
                             raise(SIGINT);
                         // format for google maps: +40  42.6142', -74  00.4168'
                         fprintf(fp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
@@ -231,7 +228,10 @@ int main(int argc, char *argv[]) {
                     speed = speed*6076.0/5280.0;
                     snprintf(gpsstr+strlen(gpsstr),MAX_LEN-strlen(gpsstr),"%.1lf",speed);
                     /* write to file */
+                    cw++;
                     fprintf(fp, "%s", gpsstr);
+                    if (cw < 0) // problem writing to flash drive
+                        raise(SIGINT);
                     // read counts from USBDaq
                     if (interval > 10e-4) {
                         for (i = 0; i < 8; i++) {
