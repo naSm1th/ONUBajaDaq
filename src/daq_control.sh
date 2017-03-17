@@ -25,7 +25,6 @@ if [ $status -eq 0 ]; then # if success
         # listen for button press
         # $wait4bp
         read stop
-        ps -o pid= -p $pid
         if ps -p $pid > /dev/null
         then 
             kill -2 $pid
@@ -42,6 +41,13 @@ if [ $status -eq 0 ]; then # if success
                 echo "$log_level: error in $daqc"
                 "./$mount" # umount usb
             fi
+        else
+            "./$mount" # umount usb
+            if [ $? -eq 0 ]; then # if success
+                echo "$log_level: Logging session terminated"
+            else
+                echo "$log_level: error in $mount"
+            fi
         fi
     else
         # show error on LED
@@ -50,5 +56,5 @@ if [ $status -eq 0 ]; then # if success
     fi
 else
     # show error on LED
-    echo "$log_level: Mounting error"
+    echo "$log_level: error in $mount"
 fi
