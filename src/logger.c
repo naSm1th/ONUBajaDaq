@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
     char *csum_str;     // checksum check
     char *gpsstr;       // string to write to file
     double interval;	// interval for usb daq counts
-    int cw;		// fprintf return val
+    int cw;		        // fprintf return val
 
     run = 1;        // flag to continue logging USBdaq data
 
@@ -119,6 +119,7 @@ int main(int argc, char *argv[]) {
 
     // init serial
   
+    cw = 0;
     while (1) {
         printf("%s: logging...\n", LOG_LEVEL);
         rawgps = (char *) malloc(MAX_LEN);
@@ -196,13 +197,13 @@ int main(int argc, char *argv[]) {
                         printf("%s\n",filepath);
                         // make new directory
                         if (mkdir(filepath,0700))
-                            //fprintf(stderr, "%s: log file already exists", LOG_LEVEL);
-                            perror("mkdir");
+                            fprintf(stderr, "%s: log directory could not be created", LOG_LEVEL);
 			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
                         fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
                         cw++;
+                        printf("%d\n", cw);
 			            if (cw > 3) // problem writing to flash drive
                             raise(SIGINT);
                         // format for google maps: +40  42.6142', -74  00.4168'
