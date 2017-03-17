@@ -199,11 +199,11 @@ int main(int argc, char *argv[]) {
 			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
-                        fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
+                        cw = fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
 			            if (cw < 0) // problem writing to flash drive
                             raise(SIGINT);
                         // format for google maps: +40  42.6142', -74  00.4168'
-                        fprintf(fp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
+                        cw = fprintf(fp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
 			            if (cw < 0) // problem writing to flash drive
                             raise(SIGINT);
                     } else {
@@ -229,20 +229,20 @@ int main(int argc, char *argv[]) {
                     speed = speed*6076.0/5280.0;
                     snprintf(gpsstr+strlen(gpsstr),MAX_LEN-strlen(gpsstr),"%.1lf",speed);
                     /* write to file */
-                    fprintf(fp, "%s", gpsstr);
+                    cw = fprintf(fp, "%s", gpsstr);
                     if (cw < 0) // problem writing to flash drive
                         raise(SIGINT);
                     // read counts from USBDaq
                     if (interval > 10e-4) {
                         for (i = 0; i < 8; i++) {
-                            fprintf(fp, ",%lf", counts[i]/interval);
+                            cw = fprintf(fp, ",%lf", counts[i]/interval);
                             if (cw < 0) // problem writing to flash drive
                                 raise(SIGINT);
                             //counts[i] = 0; // reset counts
                         }
                         memset(counts, 0, sizeof(int)*8);
                     }
-                    fprintf(fp, "\n");
+                    cw = fprintf(fp, "\n");
                     if (cw < 0) // problem writing to flash drive
                         raise(SIGINT);
                     /* free allocated memory */
