@@ -26,7 +26,7 @@ if [ $status -eq 0 ]; then # if success
         # $wait4bp
         read stop
         ps -p $pid
-        if [ ps -p $pid > /dev/null ]; then 
+        if [ ps -o pid= -p $pid > /dev/null ]; then 
             kill -2 $pid
             wait $pid
             if [ $? -eq 0 ]; then # if success
