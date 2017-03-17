@@ -25,7 +25,7 @@ if [ $status -eq 0 ]; then # if success
         # listen for button press
         # $wait4bp
         read stop
-        ps -p $pid
+        ps -o pid= -p $pid
         if [ ps -o pid= -p $pid > /dev/null ]; then 
             kill -2 $pid
             wait $pid
