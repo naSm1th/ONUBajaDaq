@@ -25,7 +25,7 @@ if [ $status -eq 0 ]; then # if success
         # listen for button press
         # $wait4bp
         read stop
-        if [ ps aux | awk "{print $2 }" | grep -q $pid > /dev/null ]; then
+        if [ ps -p $pid > /dev/null ]; then 
             kill -2 $pid
             wait $pid
             if [ $? -eq 0 ]; then # if success
