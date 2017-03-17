@@ -193,14 +193,16 @@ int main(int argc, char *argv[]) {
                         filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
                         //sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
                         sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
+                        printf("%s\n",filepath);
                         // make new directory
                         if (mkdir(filepath,0700))
                             fprintf(stderr, "%s: log file already exists", LOG_LEVEL);
 			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
-                        cw = fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
-			            if (cw < 0) // problem writing to flash drive
+                        fprintf(fp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
+                        cw++;
+			            if (cw > 3) // problem writing to flash drive
                             raise(SIGINT);
                         // format for google maps: +40  42.6142', -74  00.4168'
                         fprintf(fp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
