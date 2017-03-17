@@ -82,6 +82,7 @@ void scanDIO(int *counts, int *run) {
 
     /* loop until we get the proper signal */
     while(*run) {
+        printf("usbdaq: scanning...");
         /* store previous reading */
         prevPortVal = portVal;
         /* read digital inputs */

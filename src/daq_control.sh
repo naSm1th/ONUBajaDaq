@@ -25,19 +25,21 @@ if [ $status -eq 0 ]; then # if success
         # listen for button press
         # $wait4bp
         read stop
-        kill -2 $pid
-        wait $pid
-        if [ $? -eq 0 ]; then # if success
-            "./$mount" # umount usb
+        if [ ps aux | awk '{print $2 }' | grep -q $pid 2> /dev/null ]; then
+            kill -2 $pid
+            wait $pid
             if [ $? -eq 0 ]; then # if success
-                echo "$log_level: Logging session terminated"
+                "./$mount" # umount usb
+                if [ $? -eq 0 ]; then # if success
+                    echo "$log_level: Logging session terminated"
+                else
+                    echo "$log_level: error in $mount"
+                fi
             else
-                echo "$log_level: error in $mount"
+                # show error on LED
+                echo "$log_level: error in $daqc"
+                "./$mount" # umount usb
             fi
-        else
-            # show error on LED
-            echo "$log_level: error in $daqc"
-            "./$mount" # umount usb
         fi
     else
         # show error on LED
