@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
                         // make new directory
                         if (mkdir(filepath,0700))
                             //fprintf(stderr, "%s: log file already exists", LOG_LEVEL);
-                            perror(mkdir);
+                            perror("mkdir");
 			            sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
                         fp = fopen(filepath, "a");
                         // insert file header
