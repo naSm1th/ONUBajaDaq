@@ -11,4 +11,8 @@
 /* the serial port to use for GPS UART communication */
 #define SERIALPORT "/dev/ttyS0i"
 
-
+struct accelAxes {
+    int x;
+    int y;
+    int z;
+}

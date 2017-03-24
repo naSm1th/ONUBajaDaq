@@ -123,8 +123,47 @@ int initSerial(int *gpsfd, int *maybe) {
 
 
     /* initialize accelerometer SPI */
+    /* initialize wiringpi library to use SPI interface */
 
+    /* set FIFO mode to bypass */
+    /* set FIFO_CTRL_REG (2Eh) to 0 ? */
+    /* set FS bit to 11 */
+    /* set CTRL_REG1[3] (LPen bit) to 0 */
+    /* set CTRL_REG4[3] (HR bit) to 1 */
+    /* set CTRL_REG1[0-3] = 0010 */
     return 0;
+}
+
+/* reads values from 3 axes of accelerometer via SPI */
+/* struct should already be initialized */
+void readAccel(struct accelAxes **vals) {
+    vals->x = readAccelX();
+    vals->y = readAccelY();
+    vals->z = readAccelZ();
+}
+
+/* reads value of x axis of accelerometer via SPI */
+int readAccelX() {
+    char upper = /*TODO: insert SPI code */;
+    char lower = /*TODO: insert SPI code */;
+
+    return (lower || upper<<8);;
+}
+
+/* reads value of y axis of accelerometer via SPI */
+int readAccelY() {
+    char upper = /*TODO: insert SPI code */;
+    char lower = /*TODO: insert SPI code */;
+
+    return (lower || upper<<8);;
+}
+
+/* reads value of z axis of accelerometer via SPI */
+int readAccelZ() {
+    char upper = /*TODO: insert SPI code */;
+    char lower = /*TODO: insert SPI code */;
+
+    return (lower || upper<<8);;
 }
 
 /* cleans up serial interface */
