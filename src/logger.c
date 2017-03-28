@@ -9,7 +9,6 @@
  * License: MIT License (see LICENSE for more details)                       *
  *****************************************************************************/
 
-#define _GNU_SOURCE
 #include <stdio.h>              /* printf, snprintf */
 #include <stdlib.h>             /* exit */
 #include <string.h>             /* strcpy, strcat, strlen */
@@ -21,10 +20,11 @@
 #include <unistd.h>             /* sleep() */
 #include "usbdaq.h"
 
-#define MAX_LEN     100         /* max GPS string length */
-#define MAX_TOKENS  13          /* max num tokens in GPS string */
-#define LOG_DIR     "/mnt/bajadaq"  /* directory for logs (flash drive) */
-#define LOG_LEVEL   "logger.c"  /* name of file for logging */
+#define _GNU_SOURCE
+#define MAX_GPS_LEN     100             /* max GPS string length */
+#define MAX_TOKENS      13              /* max num tokens in GPS string */
+#define LOG_DIR         "/mnt/bajadaq"  /* directory for logs (flash drive) */
+#define LOG_LEVEL       "logger.c"      /* name of file for logging */
 
 int run;            // flag to run loop in usbdaq.c
 int counts[8];      // usbdaq shared array
@@ -123,11 +123,12 @@ int main(int argc, char *argv[]) {
         // success
     } else {
         // failure
+        // check error type
     }
   
     while (1) {
         printf("%s: logging...\n", LOG_LEVEL);
-        rawgps = (char *) malloc(MAX_LEN);
+        rawgps = (char *) malloc(MAX_GPS_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
         /* wait for input from GPS */
         int n = getSerial(serfd, serin);
@@ -163,7 +164,7 @@ int main(int argc, char *argv[]) {
                     }
                     /* if checksum is valid, process GPS string */
                     if (csum_calc == csum) {
-                        gpsstr = (char *) malloc(MAX_LEN);
+                        gpsstr = (char *) malloc(MAX_GPS_LEN);
                         // date and time
                         snprintf(gpsstr,8,"%s,",gpstok[1]);
                         gpsdate = (char *) malloc(13);
@@ -237,7 +238,7 @@ int main(int argc, char *argv[]) {
                         double speed = 0;
                         sscanf(gpstok[7], "%lf", &speed);
                         speed = speed*6076.0/5280.0;
-                        snprintf(gpsstr+strlen(gpsstr),MAX_LEN-strlen(gpsstr),"%.1lf",speed);
+                        snprintf(gpsstr+strlen(gpsstr),MAX_GPS_LEN-strlen(gpsstr),"%.1lf",speed);
                         /* write to file */
                         cw = fprintf(outfp, "%s", gpsstr);
                         if (cw < 0) // problem writing to flash drive
