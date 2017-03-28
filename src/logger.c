@@ -9,6 +9,7 @@
  * License: MIT License (see LICENSE for more details)                       *
  *****************************************************************************/
 
+#define _GNU_SOURCE
 #include <stdio.h>              /* printf, snprintf */
 #include <stdlib.h>             /* exit */
 #include <string.h>             /* strcpy, strcat, strlen */
@@ -20,11 +21,12 @@
 #include <unistd.h>             /* sleep() */
 #include "usbdaq.h"
 
-#define _GNU_SOURCE
 #define MAX_GPS_LEN     100             /* max GPS string length */
 #define MAX_TOKENS      13              /* max num tokens in GPS string */
 #define LOG_DIR         "/mnt/bajadaq"  /* directory for logs (flash drive) */
 #define LOG_LEVEL       "logger.c"      /* name of file for logging */
+
+int initSerial(int *);
 
 int run;            // flag to run loop in usbdaq.c
 int counts[8];      // usbdaq shared array
@@ -43,21 +45,22 @@ int getSerial(int fd, char **lines) {
     int cr, n;
 
     n = 0;
-    lines = (char **) malloc(20*sizeof(char *));
     
-    if (fd == -1 || fd == NULL) raise(SIGINT);
-    else {
-        while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
-            line[cr] = '\0';
-            printf("%s", line);
-            *lines++ = line;
-            n++;
-        }
-        if (cr < 0) {
-            fprintf(stderr, "%s: error in getSerial", LOG_LEVEL);
-            raise(SIGINT);
-        } else return n;
+    if (fd == -1)
+        raise(SIGINT);
+        return fd;
+    while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
+        line[cr] = '\0';
+        printf("%s", line);
+        *lines++ = line;
+        n++;
     }
+    if (cr < 0) {
+        fprintf(stderr, "%s: error in getSerial", LOG_LEVEL);
+        raise(SIGINT);
+        return cr;
+    }
+    return n;
 }
 
 /* stops program and wraps up */
@@ -130,6 +133,7 @@ int main(int argc, char *argv[]) {
         printf("%s: logging...\n", LOG_LEVEL);
         rawgps = (char *) malloc(MAX_GPS_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
+        serin = (char **) malloc(20*sizeof(char *));
         /* wait for input from GPS */
         int n = getSerial(serfd, serin);
         int i = 0;
@@ -208,7 +212,7 @@ int main(int argc, char *argv[]) {
                             if (mkdir(filepath,0700))
                                 fprintf(stderr, "%s: log directory could not be created", LOG_LEVEL);
                             sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
-                            fp = fopen(filepath, "a");
+                            outfp = fopen(filepath, "a");
                             // insert file header
                             cw = fprintf(outfp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
                             if (cw < 0) // problem writing to flash drive
@@ -225,13 +229,13 @@ int main(int argc, char *argv[]) {
                             if (difftime(newtime,oldtime) > 60) {
                                 oldtime = mktime(&tm);
                                 // close old file
-                                fclose(fp);
+                                fclose(outfp);
                                 free(filepath);
                                 // open new file
                                 filenum++;
                                 filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
                                 sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
-                                fp = fopen(filepath, "a");
+                                outfp = fopen(filepath, "a");
                             }
                         }
                         /* speed (knots to mph) */
