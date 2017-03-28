@@ -144,26 +144,40 @@ void readAccel(struct accelAxes **vals) {
 
 /* reads value of x axis of accelerometer via SPI */
 int readAccelX() {
-    char upper = /*TODO: insert SPI code */;
-    char lower = /*TODO: insert SPI code */;
+    char buffer[100];
+    buffer = "" /* TODO: put characters in buffer */;
+    char upper = rwSPI(buffer);
+    buffer = "" /* TODO: put characters in buffer */;
+    char lower = rwSPI(buffer);
 
     return (lower || upper<<8);;
 }
 
 /* reads value of y axis of accelerometer via SPI */
 int readAccelY() {
-    char upper = /*TODO: insert SPI code */;
-    char lower = /*TODO: insert SPI code */;
+    char buffer[100];
+    buffer = "" /* TODO: put characters in buffer */;
+    char upper = rwSPI(buffer);
+    buffer = "" /* TODO: put characters in buffer */;
+    char lower = rwSPI(buffer);
 
     return (lower || upper<<8);;
 }
 
 /* reads value of z axis of accelerometer via SPI */
 int readAccelZ() {
-    char upper = /*TODO: insert SPI code */;
-    char lower = /*TODO: insert SPI code */;
+    char buffer[100];
+    buffer = "" /* TODO: put characters in buffer */;
+    char upper = rwSPI(buffer);
+    buffer = "" /* TODO: put characters in buffer */;
+    char lower = rwSPI(buffer);
 
     return (lower || upper<<8);;
+}
+
+/* writes from buffer to SPI and reads response into same buffer */
+void rwSPI(char *buffer) {
+    /* TODO: write I/O stuff for SPI *?
 }
 
 /* cleans up serial interface */
