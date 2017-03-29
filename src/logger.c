@@ -136,12 +136,13 @@ int main(int argc, char *argv[]) {
         serin = (char **) malloc(20*sizeof(char *));
         /* wait for input from GPS */
         //int n = getSerial(serfd, serin);
+        serin[0] = (char *) malloc(MAX_GPS_LEN);
         strcpy(serin[0], waitForSerial());
         int n = 1;
         int i = 0;
         /* loop through strings from serial */
         while (i < n) {
-            strcpy(rawgps, serin[i]);
+            strcpy(rawgps, serin[i++]);
             if (rawgps && strlen(rawgps) > 0) {
                 csum_str = (char *) malloc(strlen(rawgps));
                 /* copy for checksum comparison (omit $) */
