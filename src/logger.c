@@ -135,7 +135,9 @@ int main(int argc, char *argv[]) {
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
         serin = (char **) malloc(20*sizeof(char *));
         /* wait for input from GPS */
-        int n = getSerial(serfd, serin);
+        //int n = getSerial(serfd, serin);
+        strcpy(serin[0], waitForSerial());
+        int n = 1;
         int i = 0;
         /* loop through strings from serial */
         while (i < n) {
@@ -215,7 +217,6 @@ int main(int argc, char *argv[]) {
                             outfp = fopen(filepath, "a");
                             // insert file header
                             cw = fprintf(outfp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
-                            printf("%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
                             if (cw < 0) // problem writing to flash drive
                                 raise(SIGINT);
                             // format for google maps: +40  42.6142', -74  00.4168'
