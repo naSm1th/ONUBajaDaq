@@ -253,7 +253,6 @@ int main(int argc, char *argv[]) {
                                 cw = fprintf(outfp, ",%lf", counts[i]/interval);
                                 if (cw < 0) // problem writing to flash drive
                                     raise(SIGINT);
-                                //counts[i] = 0; // reset counts
                             }
                             memset(counts, 0, sizeof(int)*8);
                         }
