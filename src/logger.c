@@ -215,6 +215,7 @@ int main(int argc, char *argv[]) {
                             outfp = fopen(filepath, "a");
                             // insert file header
                             cw = fprintf(outfp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
+                            printf("%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
                             if (cw < 0) // problem writing to flash drive
                                 raise(SIGINT);
                             // format for google maps: +40  42.6142', -74  00.4168'
