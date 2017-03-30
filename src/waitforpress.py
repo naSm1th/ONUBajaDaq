@@ -9,15 +9,11 @@ button = 4
 
 GPIO.setup(button, GPIO.IN, GPIO.PUD_UP)
 
+print ("waiting for button press...")
 while True:
     button_state = GPIO.input(button)
-    print ("waiting for button press...")
     if button_state == GPIO.HIGH:
-        print ("button is high")
+        print ("high")
     else:
-        print("button is low")
+        print("low")
     time.sleep(0.5)
-    # take this out ########
-    time.sleep(3)
-    break 
-    ########################
