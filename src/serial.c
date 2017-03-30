@@ -14,27 +14,32 @@
  *****************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
+#include <string.h>
+#include <sys/ioctl.h>
+
+#include "serial.h"
 
 /* this method configures the UART and SPI interfaces for GPS
      and the accelerometer modules 
     takes file descriptor to be used as argument
     returns 0 on success, non-zero on error (see serial.h) */
-int initSerial(int *gpsfd, int *maybe) {
+int initSerial(int *gpsfd) {
     /* initialize GPS UART */
-    fd = open(SERIALPORT, O_RDWR | O_NOCTTY | O_NDELAY);
+    *gpsfd = open(SERIALPORT, O_RDWR | O_NOCTTY | O_NDELAY);
 
-    if (fd == -1) {
+    if (*gpsfd == -1) {
         /* error - cannot open port */
         return -1;
     }
     
     /* get current serial port parameters */
     struct termios options;
-    tcgetattr(fd, &options);
+    tcgetattr(*gpsfd, &options);
     
     /* set baud rate */
     cfsetispeed(&options, B9600);
@@ -44,17 +49,19 @@ int initSerial(int *gpsfd, int *maybe) {
     options.c_cflag |= (CLOCAL | CREAD);
 
     /* apply new parameters */
-    tcsetattr(fd, TCSANOW, &options);
+    tcsetattr(*gpsfd, TCSANOW, &options);
 
     char buffer[6];
     int valid = 0;
     /* test settings */
     /* give it 5 attempts */
+    int i, len;
     for (i = 0; i < 5; i ++) {
-        ioctl(fd, TCFLUSH, 2);
+        ioctl(*gpsfd, TCIOFLUSH, 2);
         memset(buffer, 0, 6);
+        len = 0;
         /* attempt to read in string */
-        len = read(fd, buffer, 6, NULL);
+        len = read(*gpsfd, buffer, 6);
         if (len != 6) {
             continue;
         }
@@ -73,20 +80,20 @@ int initSerial(int *gpsfd, int *maybe) {
     /* also change update rate of device */
     if (valid == 1) {
         /* change baud rate of device */
-        if (write(gpsfd, "$PMTK251,115200*1F\r\n", 20)) {
+        if (write(*gpsfd, "$PMTK251,115200*1F\r\n", 20)) {
             /* error writing */
         }
 
         /* change baud rate of serial port */
         /* get current settings */
-        tcgetattr(fd, &options);
+        tcgetattr(*gpsfd, &options);
     
         /* set baud rate */
         cfsetispeed(&options, B115200);
         cfsetospeed(&options, B115200);
         
         /* save config */
-        tcsetattr(fd, TCSANOW, &options);
+        tcsetattr(*gpsfd, TCSANOW, &options);
     }
 
     valid = 0;
@@ -94,10 +101,11 @@ int initSerial(int *gpsfd, int *maybe) {
     /* verify we are at 115200 baud rate */
     /* give it 5 attempts */
     for (i = 0; i < 5; i ++) {
-        ioctl(fd, TCFLUSH, 2);
+        ioctl(*gpsfd, TCIOFLUSH, 2);
         memset(buffer, 0, 6);
+        len = 0;
         /* attempt to read in string */
-        len = read(fd, buffer, 6, NULL);
+        len = read(*gpsfd, buffer, 6);
         if (len != 6) {
             continue;
         }
@@ -117,7 +125,7 @@ int initSerial(int *gpsfd, int *maybe) {
     }
 
     /* change update rate of device */
-    if (write(gpsfd, "$PMTK220,100*2F\r\n", 17)) {
+    if (write(*gpsfd, "$PMTK220,100*2F\r\n", 17)) {
         /* error writing */
     }
 
@@ -136,7 +144,7 @@ int initSerial(int *gpsfd, int *maybe) {
 
 /* reads values from 3 axes of accelerometer via SPI */
 /* struct should already be initialized */
-void readAccel(struct accelAxes **vals) {
+void readAccel(struct accelAxes *vals) {
     vals->x = readAccelX();
     vals->y = readAccelY();
     vals->z = readAccelZ();
@@ -145,9 +153,9 @@ void readAccel(struct accelAxes **vals) {
 /* reads value of x axis of accelerometer via SPI */
 int readAccelX() {
     char buffer[100];
-    buffer = "" /* TODO: put characters in buffer */;
+    strcpy(buffer, ""); /* TODO: put characters in buffer */;
     char upper = rwSPI(buffer);
-    buffer = "" /* TODO: put characters in buffer */;
+    strcpy(buffer, ""); /* TODO: put characters in buffer */;
     char lower = rwSPI(buffer);
 
     return (lower || upper<<8);;
@@ -156,9 +164,9 @@ int readAccelX() {
 /* reads value of y axis of accelerometer via SPI */
 int readAccelY() {
     char buffer[100];
-    buffer = "" /* TODO: put characters in buffer */;
+    strcpy(buffer, ""); /* TODO: put characters in buffer */;
     char upper = rwSPI(buffer);
-    buffer = "" /* TODO: put characters in buffer */;
+    strcpy(buffer, ""); /* TODO: put characters in buffer */;
     char lower = rwSPI(buffer);
 
     return (lower || upper<<8);;
@@ -167,9 +175,9 @@ int readAccelY() {
 /* reads value of z axis of accelerometer via SPI */
 int readAccelZ() {
     char buffer[100];
-    buffer = "" /* TODO: put characters in buffer */;
+    strcpy(buffer, ""); /* TODO: put characters in buffer */;
     char upper = rwSPI(buffer);
-    buffer = "" /* TODO: put characters in buffer */;
+    strcpy(buffer, ""); /* TODO: put characters in buffer */;
     char lower = rwSPI(buffer);
 
     return (lower || upper<<8);;
@@ -177,10 +185,10 @@ int readAccelZ() {
 
 /* writes from buffer to SPI and reads response into same buffer */
 void rwSPI(char *buffer) {
-    /* TODO: write I/O stuff for SPI *?
+    /* TODO: write I/O stuff for SPI */
 }
 
 /* cleans up serial interface */
-int closeSerial(int *fd) {
+int closeSerial(int fd) {
     return close(fd);
 }
