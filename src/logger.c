@@ -110,7 +110,6 @@ int getSerial(int fd, char **lines) {
 static void cleanup(int sig) {
     closeSerial(serfd);
     fcloseall();
-    freeEverything();
     /* set flag to exit */
     run = 0;
     if (pthread_join(thread, NULL)) {
