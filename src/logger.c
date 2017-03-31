@@ -20,11 +20,12 @@
 #include <math.h>               /* fabs */
 #include <unistd.h>             /* sleep() */
 #include "usbdaq.h"
+#include "serial.h"
 
 #define MAX_GPS_LEN     100             /* max GPS string length */
 #define MAX_TOKENS      13              /* max num tokens in GPS string */
 #define LOG_DIR         "/mnt/bajadaq"  /* directory for logs (flash drive) */
-#define LOG_LEVEL       "logger.c"      /* name of file for logging */
+#define LOG_LEVEL       "logger"      /* name of file for logging */
 
 int initSerial(int *);
 
@@ -32,6 +33,7 @@ int run;            // flag to run loop in usbdaq.c
 int counts[8];      // usbdaq shared array
 char *dirname;      // directory for session
 pthread_t thread;   // thread for usbdaq
+int serfd;          // serial file
 
 char *waitForSerial() {
     return "$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62";
@@ -66,6 +68,7 @@ int getSerial(int fd, char **lines) {
 /* stops program and wraps up */
 static void cleanup(int sig) {
     free(dirname);
+    closeSerial(serfd);
     fcloseall();
     /* set flag to exit */
     run = 0;
@@ -78,7 +81,6 @@ static void cleanup(int sig) {
 
 int main(int argc, char *argv[]) {
     FILE *outfp;        // output file pointer
-    int serfd;          // serial file
     int filenum = 1;    // current file
     char *filepath;     // full file path
     int first = 1;      // boolean for first time
@@ -124,8 +126,10 @@ int main(int argc, char *argv[]) {
     /* initialize serial */
     if (initSerial(&serfd)) {
         // success
+        printf("%s: initSerial\n", LOG_LEVEL);
     } else {
         // failure
+        printf("%s: initSerial failed\n", LOG_LEVEL);
         // check error type
     }
   
@@ -133,12 +137,12 @@ int main(int argc, char *argv[]) {
         printf("%s: logging...\n", LOG_LEVEL);
         rawgps = (char *) malloc(MAX_GPS_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
-        serin = (char **) malloc(20*sizeof(char *));
+        serin = (char **) malloc(10*sizeof(char *));
         /* wait for input from GPS */
-        //int n = getSerial(serfd, serin);
-        serin[0] = (char *) malloc(MAX_GPS_LEN);
-        strcpy(serin[0], waitForSerial());
-        int n = 1;
+        int n = getSerial(serfd, serin);
+        //serin[0] = (char *) malloc(MAX_GPS_LEN);
+        //strcpy(serin[0], waitForSerial());
+        //int n = 1;
         int i = 0;
         /* loop through strings from serial */
         while (i < n) {
