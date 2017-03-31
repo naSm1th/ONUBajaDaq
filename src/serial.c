@@ -154,9 +154,11 @@ void readAccel(struct accelAxes *vals) {
 int readAccelX() {
     char buffer[100];
     strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    char upper = rwSPI(buffer);
+    rwSPI(buffer);
+    char upper = 0;
     strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    char lower = rwSPI(buffer);
+    rwSPI(buffer);
+    char lower = 0;
 
     return (lower || upper<<8);;
 }
@@ -165,9 +167,11 @@ int readAccelX() {
 int readAccelY() {
     char buffer[100];
     strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    char upper = rwSPI(buffer);
+    rwSPI(buffer);
+    char upper = 0;
     strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    char lower = rwSPI(buffer);
+    rwSPI(buffer);
+    char lower = 0;
 
     return (lower || upper<<8);;
 }
@@ -176,9 +180,11 @@ int readAccelY() {
 int readAccelZ() {
     char buffer[100];
     strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    char upper = rwSPI(buffer);
+    rwSPI(buffer);
+    char upper = 0;
     strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    char lower = rwSPI(buffer);
+    rwSPI(buffer);
+    char lower = 0;
 
     return (lower || upper<<8);;
 }
