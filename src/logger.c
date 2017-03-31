@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     pthread_attr_destroy(&attr);
 
     /* initialize serial */
-    if (initSerial(&serfd)) {
+    if (!initSerial(&serfd)) {
         // success
         printf("%s: initSerial\n", LOG_LEVEL);
     } else {
