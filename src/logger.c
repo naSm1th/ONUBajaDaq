@@ -34,9 +34,40 @@ int counts[8];      // usbdaq shared array
 char *dirname;      // directory for session
 pthread_t thread;   // thread for usbdaq
 int serfd;          // serial file
+FILE *outfp;        // output file pointer
+int filenum = 1;    // current file
+char *filepath;     // full file path
+int first = 1;      // boolean for first time
+struct tm tm;       // time for str to time 
+time_t newtime, oldtime;    // times for comparison
+char *gpstime, *gpsdate;  // date and time
+char *latitude, *longitude; // coordinates
+char *rawgps;       // unparsed string
+char **gpstok;      // parsed string
+char **serin;       // lines from serial input
+char *csum_str;     // checksum check
+char *gpsstr;       // string to write to file
+double interval;	// interval for usb daq counts
+int cw;		        // fprintf return val
 
+/* temporary */
 char *waitForSerial() {
     return "$GPRMC,081836,A,3751.65,S,14507.36,E,000.0,360.0,130998,011.3,E*62";
+}
+
+void freeEverything() {
+    free(filepath);
+    free(dirname);
+    free(gpsdate);
+    free(gpstime);
+    free(latitude);
+    free(longitude);
+    free(gpsstr);
+    free(gpstok);
+    free(csum_str);
+    free(rawgps);
+    free(serin);
+    free(outfp);
 }
 
 /* gets input from serial
@@ -49,6 +80,11 @@ int getSerial(int fd, char **lines) {
     n = 0;
     
     if (fd == -1)
+        /* free allocated memory */
+        free(rawgps);
+        free(gpstok);
+        free(serin);
+        /* exit */
         raise(SIGINT);
         return fd;
     while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
@@ -59,6 +95,11 @@ int getSerial(int fd, char **lines) {
     }
     if (cr < 0) {
         fprintf(stderr, "%s: error in getSerial", LOG_LEVEL);
+        /* free allocated memory */
+        free(rawgps);
+        free(gpstok);
+        free(serin);
+        /* exit */
         raise(SIGINT);
         return cr;
     }
@@ -67,9 +108,9 @@ int getSerial(int fd, char **lines) {
 
 /* stops program and wraps up */
 static void cleanup(int sig) {
-    free(dirname);
     closeSerial(serfd);
     fcloseall();
+    freeEverything();
     /* set flag to exit */
     run = 0;
     if (pthread_join(thread, NULL)) {
@@ -79,23 +120,8 @@ static void cleanup(int sig) {
     exit(0);
 }
 
-int main(int argc, char *argv[]) {
-    FILE *outfp;        // output file pointer
-    int filenum = 1;    // current file
-    char *filepath;     // full file path
-    int first = 1;      // boolean for first time
-    struct tm tm;       // time for str to time 
-    time_t newtime, oldtime;    // times for comparison
-    char *gpstime, *gpsdate;  // date and time
-    char *latitude, *longitude; // coordinates
-    char *rawgps;       // unparsed string
-    char **gpstok;      // parsed string
-    char **serin;       // lines from serial input
-    char *csum_str;     // checksum check
-    char *gpsstr;       // string to write to file
-    double interval;	// interval for usb daq counts
-    int cw;		        // fprintf return val
 
+int main(int argc, char *argv[]) {
     run = 1;        // flag to continue logging USBdaq data
 
     // catch ctrl-C 
@@ -131,6 +157,7 @@ int main(int argc, char *argv[]) {
         // failure
         printf("%s: initSerial failed\n", LOG_LEVEL);
         // check error type
+        raise(SIGINT);
     }
   
     while (1) {
@@ -222,12 +249,20 @@ int main(int argc, char *argv[]) {
                             outfp = fopen(filepath, "a");
                             // insert file header
                             cw = fprintf(outfp, "%s Logging Session\nStart time:,%s\n", gpsdate, gpstime);
-                            if (cw < 0) // problem writing to flash drive
+                            if (cw < 0) { // problem writing to flash drive
+                                /* free allocated memory */
+                                freeEverything();
+                                /* exit */
                                 raise(SIGINT);
+                            }
                             // format for google maps: +40  42.6142', -74  00.4168'
                             cw = fprintf(outfp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
-                            if (cw < 0) // problem writing to flash drive
+                            if (cw < 0) { // problem writing to flash drive
+                                /* free allocated memory */
+                                freeEverything();
+                                /* exit */
                                 raise(SIGINT);
+                            }
                         } else {
                             strcat(gpsdate,gpstime);
                             strptime(gpsdate, "%d%m%y%H%M%S", &tm);
@@ -252,20 +287,32 @@ int main(int argc, char *argv[]) {
                         snprintf(gpsstr+strlen(gpsstr),MAX_GPS_LEN-strlen(gpsstr),"%.1lf",speed);
                         /* write to file */
                         cw = fprintf(outfp, "%s", gpsstr);
-                        if (cw < 0) // problem writing to flash drive
+                        if (cw < 0) { // problem writing to flash drive
+                            /* free allocated memory */
+                            freeEverything();
+                            /* exit */
                             raise(SIGINT);
+                        }
                         // read counts from USBDaq
                         if (interval > 10e-4) {
                             for (i = 0; i < 8; i++) {
                                 cw = fprintf(outfp, ",%lf", counts[i]/interval);
-                                if (cw < 0) // problem writing to flash drive
+                                if (cw < 0) { // problem writing to flash drive
+                                    /* free allocated memory */
+                                    freeEverything();
+                                    /* exit */
                                     raise(SIGINT);
+                                }
                             }
                             memset(counts, 0, sizeof(int)*8);
                         }
                         cw = fprintf(outfp, "\n");
-                        if (cw < 0) // problem writing to flash drive
+                        if (cw < 0) { // problem writing to flash drive
+                            /* free allocated memory */
+                            freeEverything();
+                            /* exit */
                             raise(SIGINT);
+                        }
                         /* free allocated memory */
                         free(gpsdate);
                         free(gpstime);
