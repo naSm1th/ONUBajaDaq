@@ -79,7 +79,7 @@ int getSerial(int fd, char **lines) {
 
     n = 0;
     
-    if (fd == -1)
+    if (fd == -1) {
         /* free allocated memory */
         free(rawgps);
         free(gpstok);
@@ -87,6 +87,7 @@ int getSerial(int fd, char **lines) {
         /* exit */
         raise(SIGINT);
         return fd;
+    }
     while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
         line[cr] = '\0';
         printf("%s", line);
