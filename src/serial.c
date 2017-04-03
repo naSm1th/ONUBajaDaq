@@ -30,7 +30,7 @@
     returns 0 on success, non-zero on error (see serial.h) */
 int initSerial(int *gpsfd) {
     /* initialize GPS UART */
-    *gpsfd = open(SERIALPORT, O_RDWR | O_NOCTTY | O_NDELAY);
+    *gpsfd = open(SERIALPORT, O_RDWR | O_NOCTTY);
 
     if (*gpsfd == -1) {
         /* error - cannot open port */
@@ -56,7 +56,7 @@ int initSerial(int *gpsfd) {
     /* test settings */
     /* give it 5 attempts */
     int i, len;
-    for (i = 0; i < 5; i ++) {
+    for (i = 0; i < 25; i ++) {
         ioctl(*gpsfd, TCIOFLUSH, 2);
         memset(buffer, 0, 6);
         len = 0;
@@ -73,6 +73,7 @@ int initSerial(int *gpsfd) {
             valid = 1;
             break;
         }
+        usleep(100000);
     }
 
     /* check if we are still at 9600 baud */
@@ -100,7 +101,7 @@ int initSerial(int *gpsfd) {
 
     /* verify we are at 115200 baud rate */
     /* give it 5 attempts */
-    for (i = 0; i < 5; i ++) {
+    for (i = 0; i < 25; i ++) {
         ioctl(*gpsfd, TCIOFLUSH, 2);
         memset(buffer, 0, 6);
         len = 0;
@@ -117,10 +118,11 @@ int initSerial(int *gpsfd) {
             valid = 1;
             break;
         }
+        usleep(100000);
     }
 
     /* check to see if we still can't read data */
-    if (valid != 0) {
+    if (valid == 0) {
         return -1;
     }
 

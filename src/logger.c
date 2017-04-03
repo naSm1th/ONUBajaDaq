@@ -89,7 +89,7 @@ int getSerial(int fd, char **lines) {
         return fd;
     }
     while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
-        if (strcmp(line,"")) break;
+        if (!strcmp(line,"") || line[0] == '\n') break;
         line[cr] = '\0';
         *lines++ = line;
         n++;
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 /* check sentence type */
-                if (strcmp(gpstok[0], "$GPRMC") == 0) {
+                if (!strcmp(gpstok[0], "$GPRMC")) {
                     /* checksum calculations */
                     int csum = 0;
                     int csum_calc = 0;
@@ -209,8 +209,8 @@ int main(int argc, char *argv[]) {
                         // GPS coordinates 
                         latitude = (char *) malloc(12);
                         longitude = (char *) malloc(13);
-                        (strcmp(gpstok[4],"N") == 0) ? strcpy(latitude, "+") : strcpy(latitude, "-");
-                        (strcmp(gpstok[6],"E") == 0) ? strcpy(longitude, "+") : strcpy(longitude, "-");
+                        (!strcmp(gpstok[4],"N")) ? strcpy(latitude, "+") : strcpy(latitude, "-");
+                        (!strcmp(gpstok[6],"E")) ? strcpy(longitude, "+") : strcpy(longitude, "-");
                         strncat(latitude, gpstok[3], 2);
                         strncat(longitude, gpstok[5], 3);
                         strcat(latitude, " ");
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
                         strncat(latitude, gpstok[3]+2, 7);
                         strncat(longitude, gpstok[5]+3, 7);
                         // if valid fix, keep coordinates
-                        if (strcmp(gpstok[2],"A") == 0) {
+                        if (!strcmp(gpstok[2],"A")) {
                             sprintf(gpsstr+strlen(gpsstr),"%s,%s,",latitude,longitude);
                         } else {
                             sprintf(gpsstr+strlen(gpsstr),",,");
@@ -333,6 +333,6 @@ int main(int argc, char *argv[]) {
             }
         }
         // for testing
-        sleep(1);
+        //sleep(1);
     }
 }
