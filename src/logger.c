@@ -89,8 +89,8 @@ int getSerial(int fd, char **lines) {
         return fd;
     }
     while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
+        if (strcmp(line,"")) break;
         line[cr] = '\0';
-        printf("line = %s, n = %d", line, n);
         *lines++ = line;
         n++;
     }
