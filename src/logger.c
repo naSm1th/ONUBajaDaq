@@ -90,7 +90,7 @@ int getSerial(int fd, char **lines) {
     }
     while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
         line[cr] = '\0';
-        printf("%s", line);
+        printf("line = %s, n = %d", line, n);
         *lines++ = line;
         n++;
     }
@@ -150,12 +150,9 @@ int main(int argc, char *argv[]) {
     pthread_attr_destroy(&attr);
 
     /* initialize serial */
-    if (!initSerial(&serfd)) {
-        // success
-        printf("%s: initSerial\n", LOG_LEVEL);
-    } else {
+    if (initSerial(&serfd)) {
         // failure
-        printf("%s: initSerial failed\n", LOG_LEVEL);
+        fprintf(stderr, "%s: initSerial failed\n", LOG_LEVEL);
         // check error type
         raise(SIGINT);
     }
