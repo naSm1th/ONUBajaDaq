@@ -154,18 +154,21 @@ int main(int argc, char *argv[]) {
   
     while (1) {
         printf("%s: logging...\n", LOG_LEVEL);
-        while (1) {
+        int fixed = 0;
+        while (!fixed) {
             /* wait for 2 seconds to receive gps data */
             if (gps_waiting(&gpsdata, 2000000)) {
                 /* read data */
                 if ((rc = gps_read(&gpsdata)) < 0) {
                     printf("%s: code: %d, reason: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
+                    raise(SIGINT);
                 } else {
                     if ((gpsdata.status == STATUS_FIX) && (gpsdata.fix.mode == MODE_2D || gpsdata.fix.mode == MODE_3D) && !isnan(gpsdata.fix.latitude) && !isnan(gpsdata.fix.longitude)) {
-                        printf("got the stuff!\n");
+                        printf("%s: got the fix\n", LOG_LEVEL);
+                        fixed = 1;
                     } else {
                         // no fix
-                        printf("%s: no gps fix\n", LOG_LEVEL);
+                        printf("%s: waiting for fix...\n", LOG_LEVEL);
                     }
                 }
             }
