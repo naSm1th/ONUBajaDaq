@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
 
     int rc;
     if ((rc = gps_open("localhost", "2947", &gpsdata)) == -1) {
-        fprintf(stderr, "code: %d, reason: %s\n", rc, gps_errstr(rc));
+        fprintf(stderr, "%s: code: %d, reason: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
         raise(SIGINT);
     }
     gps_stream(&gpsdata, WATCH_ENABLE | WATCH_JSON, NULL);
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
         if (gps_waiting(&gpsdata, 2000000)) {
             /* read data */
             if ((rc = gps_read(&gpsdata)) < 0) {
-                printf("error occured reading gps data. code: %d, reason: %s\n", rc, gps_errstr(rc));
+                printf("%s: code: %d, reason: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
             } else {
                 if ((gpsdata.status == STATUS_FIX) && (gpsdata.fix.mode == MODE_2D || gpsdata.fix.mode == MODE_3D) && !isnan(gpsdata.fix.latitude) && !isnan(gpsdata.fix.longitude)) {
                     printf("got the stuff!\n");
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
             newtime = mktime(&tm);
             // open new file
             filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
-            //sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
+            sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
             sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
             // make new directory
             if (mkdir(filepath,0700))
