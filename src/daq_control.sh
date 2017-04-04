@@ -11,10 +11,13 @@ log_level="onubajadaq"     # name of main program
 daqc="daq"        # name of executable c file
 mount="mount.sh"  # name of usb mount script
 wait4bp="python waitforpress.py" # name of python GPIO button script
+startgpsd="sudo gpsd /dev/serial0 -F /var/run/gpsd.sock"
+endgpsd="sudo killall gpsd"
 
 # listen for button press
 $wait4bp
 echo "$log_level: Logging session initiated"
+$startgpsd
 # mount USB
 "./$mount"
 status=$?
@@ -58,3 +61,4 @@ else
     # show error on LED
     echo "$log_level: error in $mount"
 fi
+$endgps
