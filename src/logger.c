@@ -19,6 +19,7 @@
 #include <signal.h>             /* SIGTERM */
 #include <math.h>               /* fabs */
 #include <unistd.h>             /* sleep() */
+#include <gps.h>                /* gpsd */
 #include "usbdaq.h"
 #include "serial.h"
 
@@ -49,6 +50,7 @@ char *csum_str;     // checksum check
 char *gpsstr;       // string to write to file
 double interval;	// interval for usb daq counts
 int cw;		        // fprintf return val
+struct gps_data_t gpsdata;
 
 /* temporary */
 char *waitForSerial() {
@@ -110,6 +112,8 @@ int getSerial(int fd, char **lines) {
 /* stops program and wraps up */
 static void cleanup(int sig) {
     closeSerial(serfd);
+    gps_stream(&gpsdata, WATCH_DISABLE, NULL);
+    gps_close(&gpsdata);
     fcloseall();
     /* set flag to exit */
     run = 0;
@@ -156,17 +160,38 @@ int main(int argc, char *argv[]) {
         // check error type
         raise(SIGINT);
     }
+
+    int rc;
+    if ((rc = gps_open("localhost", "2947", &gpsdata)) == -1) {
+        fprintf(stderr, "code: %d, reason: %s\n", rc, gps_errstr(rc));
+        raise(SIGINT);
+    }
+    gps_stream(&gpsdata, WATCH_ENABLE | WATCH_JSON, NULL);
   
     while (1) {
         printf("%s: logging...\n", LOG_LEVEL);
         rawgps = (char *) malloc(MAX_GPS_LEN);
         gpstok = (char **) malloc(MAX_TOKENS*sizeof(char *)); 
         serin = (char **) malloc(10*sizeof(char *));
-        /* wait for input from GPS */
-        int n = getSerial(serfd, serin);
+        /* wait for 2 seconds to receive gps data */
+        if (gps_waiting(&gpsdata, 2000000)) {
+            /* read data */
+            if ((rc = gps_read(&gpsdata)) < 0) {
+                printf("error occured reading gps data. code: %d, reason: %s\n", rc, gps_errstr(rc));
+            } else {
+                /* Display data from the GPS receiver. */
+                if ((gpsdata.status == STATUS_FIX) && (gpsdata.fix.mode == MODE_2D || gpsdata.fix.mode == MODE_3D) && !isnan(gpsdata.fix.latitude) && !isnan(gpsdata.fix.longitude)) {
+                    printf("got the stuff!\n");
+                } else {
+                    // no fix
+                    printf("%s: no gps fix\n", LOG_LEVEL);
+                }
+            }
+        }
+        //int n = getSerial(serfd, serin);
         //serin[0] = (char *) malloc(MAX_GPS_LEN);
         //strcpy(serin[0], waitForSerial());
-        //int n = 1;
+        int n = 0;
         int i = 0;
         /* loop through strings from serial */
         while (i < n) {
