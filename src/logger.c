@@ -171,6 +171,7 @@ int main(int argc, char *argv[]) {
                         printf("%s: waiting for fix...\n", LOG_LEVEL);
                     }
                 }
+                sleep(1);
             }
         }
         /* checksum calc
@@ -191,9 +192,9 @@ int main(int argc, char *argv[]) {
         time_t ts = (time_t)gpsdata.fix.time;
         gpsdate = (char *) malloc(13);
         gpstime = (char *) malloc(10);
-        strftime(gpsdate, 13, "%d%m%y%H%M%S", localtime(&ts));
-        strftime(gpstime, 10, "%H%M%S", localtime(&ts));
-        printf("time from gps: %s\n", gpsdate);
+        strftime(gpsdate, 6, "%d%m%y", localtime(&ts));
+        strftime(gpstime, 9, "%H%M%S", localtime(&ts));
+        printf("time from gps: %s_%s\n", gpsdate, gpstime);
         // GPS coordinates 
         latitude = (char *) malloc(12);
         longitude = (char *) malloc(13);
