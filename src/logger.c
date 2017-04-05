@@ -155,9 +155,9 @@ int main(int argc, char *argv[]) {
     while (1) {
         printf("%s: logging...\n", LOG_LEVEL);
         int fixed = 0;
-        while (!fixed) {
-            /* wait for 2 seconds to receive gps data */
-            if (gps_waiting(&gpsdata, 2000000)) {
+        /* wait for 2 seconds to receive gps data */
+        if (gps_waiting(&gpsdata, 2000000)) {
+            while (!fixed) {
                 /* read data */
                 if ((rc = gps_read(&gpsdata)) < 0) {
                     printf("%s: code: %d, reason: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
