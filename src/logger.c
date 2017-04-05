@@ -191,8 +191,8 @@ int main(int argc, char *argv[]) {
         time_t ts = (time_t)gpsdata.fix.time;
         gpsdate = (char *) malloc(13);
         gpstime = (char *) malloc(10);
-        strftime(gpsdate, sizeof(gpsdate), "%d%m%y%H%M%S", localtime(&ts));
-        strftime(gpstime, sizeof(gpstime), "%H%M%S", localtime(&ts));
+        strftime(gpsdate, 13, "%d%m%y%H%M%S", localtime(&ts));
+        strftime(gpstime, 10, "%H%M%S", localtime(&ts));
         printf("time from gps: %s\n", gpsdate);
         // GPS coordinates 
         latitude = (char *) malloc(12);
