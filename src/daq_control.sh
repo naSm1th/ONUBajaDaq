@@ -17,6 +17,7 @@ endgpsd="sudo killall gpsd"
 # listen for button press
 $wait4bp
 echo "$log_level: Logging session initiated"
+# change update rate then wait for confirmation
 $startgpsd
 # mount USB
 "./$mount"
