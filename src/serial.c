@@ -28,7 +28,25 @@
      and the accelerometer modules 
     takes file descriptor to be used as argument
     returns 0 on success, non-zero on error (see serial.h) */
-int initSerial(int *gpsfd) {
+int initSerial() {
+    /* initialize GPS UART */
+    int gpsfd = open(SERIALPORT, O_RDWR | O_NOCTTY);
+
+    if (gpsfd == -1) {
+        /* error - cannot open port */
+        return -1;
+    }
+
+    /* change update rate of device */
+    if (!write(gpsfd, "$PMTK220,100*2F\r\n", 17)) {
+        /* error - cannot write */
+        perror("serial write");
+        return -2;
+    }
+
+    /* close file */
+    close(gpsfd);
+
     /* initialize accelerometer SPI */
     /* initialize wiringpi library to use SPI interface */
 
