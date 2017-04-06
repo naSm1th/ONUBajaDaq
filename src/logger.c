@@ -40,7 +40,7 @@ struct tm tm;       // time for str to time
 time_t newtime, oldtime;    // times for comparison
 char *gpstime, *gpsdate;    // date and time
 char *fdate;                // formatted date
-double latitude, longitude; // coordinates
+char *latitude, *longitude; // coordinates
 char *gpsstr;       // string to write to file
 double interval;	// interval for usb daq counts
 int cw;		        // fprintf return val
@@ -123,7 +123,7 @@ void waitForGPS() {
                 if ((gpsdata.status == STATUS_FIX) && gpsdata.fix.mode >= MODE_2D && !isnan(gpsdata.fix.latitude) && !isnan(gpsdata.fix.longitude)) {
                     printf("%s: got the fix\n", LOG_LEVEL);
                     fixed = 1;
-                } 
+                } else printf("no fix\n");
             }
             sleep(1);
         }
@@ -132,6 +132,128 @@ void waitForGPS() {
     }
 }
 
+void update() {
+    gpsstr = (char *) malloc(MAX_GPS_LEN);
+    // date and time
+    time_t ts = (time_t)gpsdata.fix.time;
+    double ms = (double)gpsdata.fix.time-(int)ts;
+    printf("ms = %lf\n", ms);
+    gpsdate = (char *) malloc(13);
+    gpstime = (char *) malloc(7);
+    strftime(gpsdate, 7, "%d%m%y", localtime(&ts));
+    strftime(gpstime, 7, "%H%M%S", localtime(&ts));
+    fdate = ctime(&ts);
+    //printf("%s\n", fdate);
+    // GPS coordinates 
+    latitude = (char *) malloc(10);
+    longitude = (char *) malloc(10);
+    /*
+    strncat(latitude, , 2);
+    strncat(longitude, , 3);
+    strcat(latitude, " ");
+    strcat(longitude, " ");
+    strncat(latitude, gpstok[3]+2, 7);
+    strncat(longitude, gpstok[5]+3, 7);
+    */
+    sprintf(gpsstr,"%s%lf,%s,%s,",gpstime,ms,latitude,longitude);
+    /*
+    } else {
+        sprintf(gpsstr+strlen(gpsstr),",,");
+    }
+    */
+    if (first) {
+        first = 0; 
+        dirname = (char *) malloc(15);
+        strcpy(dirname,gpsdate);
+        strcat(dirname,"_");
+        strncat(dirname,gpstime,6);
+        strptime(dirname, "%d%m%y_%H%M%S", &tm);
+        // set time for new file check 
+        oldtime = mktime(&tm);
+        newtime = mktime(&tm);
+        // open new file
+        filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
+        sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
+        sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
+        // make new directory
+        if (mkdir(filepath,0700))
+            fprintf(stderr, "%s: log directory could not be created (USB might not be mounted)\n", LOG_LEVEL);
+        sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
+        outfp = fopen(filepath, "a");
+        // insert file header
+        cw = fprintf(outfp, "%s\n", fdate);
+        if (cw < 0) { // problem writing to flash drive
+            /* free allocated memory */
+            freeEverything();
+            /* exit */
+            raise(SIGINT);
+        }
+        // format for google maps: +40 42.6142', -74 00.4168'
+        cw = fprintf(outfp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n\n");
+        if (cw < 0) { // problem writing to flash drive
+            /* free allocated memory */
+            freeEverything();
+            /* exit */
+            raise(SIGINT);
+        }
+    } else {
+        strcat(gpsdate,gpstime);
+        strptime(gpsdate, "%d%m%y%H%M%S", &tm);
+        interval = difftime(mktime(&tm),newtime);
+        newtime = mktime(&tm);
+        if (difftime(newtime,oldtime) > 60) {
+            oldtime = mktime(&tm);
+            // close old file
+            fclose(outfp);
+            free(filepath);
+            // open new file
+            filenum++;
+            filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
+            sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
+            outfp = fopen(filepath, "a");
+        }
+    }
+    /* speed (knots to mph) */
+    double speed = gpsdata.fix.speed;
+    speed = speed*6076.0/5280.0;
+    snprintf(gpsstr+strlen(gpsstr),MAX_GPS_LEN-strlen(gpsstr),"%.1lf",speed);
+    /* write to file */
+    cw = fprintf(outfp, "%s", gpsstr);
+    if (cw < 0) { // problem writing to flash drive
+        /* free allocated memory */
+        freeEverything();
+        /* exit */
+        raise(SIGINT);
+    }
+    // read counts from USBDaq
+    cw = 1;
+    int i;
+    for (i = 0; i < 8; i++) {
+        if (interval > 10e-4) {
+            cw = fprintf(outfp, ",%lf", counts[i]/interval);
+        } else {
+            cw = fprintf(outfp, ",%lf", 0.0);
+        }
+        if (cw < 0) { // problem writing to flash drive
+            /* free allocated memory */
+            freeEverything();
+            /* exit */
+            raise(SIGINT);
+        }
+    }
+    memset(counts, 0, sizeof(int)*8);
+    cw = fprintf(outfp, "\n");
+    if (cw < 0) { // problem writing to flash drive
+        /* free allocated memory */
+        freeEverything();
+        /* exit */
+        raise(SIGINT);
+    }
+    /* free allocated memory */
+    free(gpsdate);
+    free(gpstime);
+    free(gpsstr);
+}
 
 int main(int argc, char *argv[]) {
     run = 1;        // flag to continue logging USBdaq data
@@ -180,9 +302,9 @@ int main(int argc, char *argv[]) {
     waitForGPS();
 
     int runlimit = 0;
-    while (runlimit < 10) {
+    while (runlimit < 20) {
         runlimit++;
-        printf("%s: logging...\n", LOG_LEVEL);
+        printf("%s: logging...%d\n", LOG_LEVEL, runlimit);
         if (!gps_waiting(&gpsdata, 5000000)) {
             /* timeout after 5 seconds */
             fprintf(stderr, "%s: gpsd not available\n", LOG_LEVEL);
@@ -214,122 +336,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
                 */
-                gpsstr = (char *) malloc(MAX_GPS_LEN);
-                // date and time
-                time_t ts = (time_t)gpsdata.fix.time;
-                gpsdate = (char *) malloc(13);
-                gpstime = (char *) malloc(10);
-                strftime(gpsdate, 7, "%d%m%y", localtime(&ts));
-                strftime(gpstime, 10, "%H%M%S", localtime(&ts));
-                fdate = ctime(&ts);
-                //printf("%s\n", fdate);
-                // GPS coordinates 
-                /*
-                (!strcmp(gpstok[4],"N")) ? strcpy(latitude, "+") : strcpy(latitude, "-");
-                (!strcmp(gpstok[6],"E")) ? strcpy(longitude, "+") : strcpy(longitude, "-");
-                strncat(latitude, gpstok[3], 2);
-                strncat(longitude, gpstok[5], 3);
-                strcat(latitude, " ");
-                strcat(longitude, " ");
-                strncat(latitude, gpstok[3]+2, 7);
-                strncat(longitude, gpstok[5]+3, 7);
-                */
-                sprintf(gpsstr,"%lf,%lf,",gpsdata.fix.latitude,gpsdata.fix.longitude);
-                /*
-                } else {
-                    sprintf(gpsstr+strlen(gpsstr),",,");
-                }
-                */
-                if (first) {
-                    first = 0; 
-                    dirname = (char *) malloc(15);
-                    strcpy(dirname,gpsdate);
-                    strcat(dirname,"_");
-                    strncat(dirname,gpstime,6);
-                    strptime(dirname, "%d%m%y_%H%M%S", &tm);
-                    // set time for new file check 
-                    oldtime = mktime(&tm);
-                    newtime = mktime(&tm);
-                    // open new file
-                    filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
-                    sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
-                    sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
-                    // make new directory
-                    if (mkdir(filepath,0700))
-                        fprintf(stderr, "%s: log directory could not be created (USB might not be mounted)\n", LOG_LEVEL);
-                    sprintf(filepath+strlen(filepath),"%03d.csv", filenum);
-                    outfp = fopen(filepath, "a");
-                    // insert file header
-                    cw = fprintf(outfp, "%s\n", fdate);
-                    if (cw < 0) { // problem writing to flash drive
-                        /* free allocated memory */
-                        freeEverything();
-                        /* exit */
-                        raise(SIGINT);
-                    }
-                    // format for google maps: +40  42.6142', -74  00.4168'
-                    cw = fprintf(outfp, "Copy and paste lat and long cells separated by commas into a Google search bar to verify starting coordinates\n");
-                    if (cw < 0) { // problem writing to flash drive
-                        /* free allocated memory */
-                        freeEverything();
-                        /* exit */
-                        raise(SIGINT);
-                    }
-                } else {
-                    strcat(gpsdate,gpstime);
-                    strptime(gpsdate, "%d%m%y%H%M%S", &tm);
-                    interval = difftime(mktime(&tm),newtime);
-                    newtime = mktime(&tm);
-                    if (difftime(newtime,oldtime) > 60) {
-                        oldtime = mktime(&tm);
-                        // close old file
-                        fclose(outfp);
-                        free(filepath);
-                        // open new file
-                        filenum++;
-                        filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
-                        sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, filenum);
-                        outfp = fopen(filepath, "a");
-                    }
-                }
-                /* speed (knots to mph) */
-                double speed = gpsdata.fix.speed;
-                speed = speed*6076.0/5280.0;
-                snprintf(gpsstr+strlen(gpsstr),MAX_GPS_LEN-strlen(gpsstr),"%.1lf",speed);
-                /* write to file */
-                cw = fprintf(outfp, "%s", gpsstr);
-                if (cw < 0) { // problem writing to flash drive
-                    /* free allocated memory */
-                    freeEverything();
-                    /* exit */
-                    raise(SIGINT);
-                }
-                // read counts from USBDaq
-                cw = 1;
-                if (interval > 10e-4) {
-                    int i;
-                    for (i = 0; i < 8; i++) {
-                        cw = fprintf(outfp, ",%lf", counts[i]/interval);
-                        if (cw < 0) { // problem writing to flash drive
-                            /* free allocated memory */
-                            freeEverything();
-                            /* exit */
-                            raise(SIGINT);
-                        }
-                    }
-                    memset(counts, 0, sizeof(int)*8);
-                }
-                cw = fprintf(outfp, "\n");
-                if (cw < 0) { // problem writing to flash drive
-                    /* free allocated memory */
-                    freeEverything();
-                    /* exit */
-                    raise(SIGINT);
-                }
-                /* free allocated memory */
-                free(gpsdate);
-                free(gpstime);
-                free(gpsstr);
+                update();
             }
         }
     }
