@@ -17,7 +17,6 @@
 #include <pthread.h>            /* threading */
 #include <sys/stat.h>           /* stat */
 #include <signal.h>             /* SIGTERM */
-#include <math.h>               /* fabs */
 #include <unistd.h>             /* sleep() */
 #include <gps.h>                /* gpsd */
 #include "usbdaq.h"
@@ -137,13 +136,11 @@ void update() {
     // date and time
     time_t ts = (time_t)gpsdata.fix.time;
     double ms = (double)gpsdata.fix.time-(int)ts;
-    printf("ms = %lf\n", ms);
     gpsdate = (char *) malloc(13);
     gpstime = (char *) malloc(7);
     strftime(gpsdate, 7, "%d%m%y", localtime(&ts));
     strftime(gpstime, 7, "%H%M%S", localtime(&ts));
     fdate = ctime(&ts);
-    //printf("%s\n", fdate);
     // GPS coordinates 
     latitude = (char *) malloc(10);
     longitude = (char *) malloc(10);
