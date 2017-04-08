@@ -178,7 +178,18 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         sprintf(filepath+strlen(filepath),"%03d.csv", *fn);
         outfp = fopen(filepath, "a");
         // insert file header
-        cw = fprintf(outfp, "%s\n", fdate);
+        cw = fprintf(outfp, "%s\n|  time  |   lat   |   long   |speed| ... |\n", fdate);
+        if (cw < 0) { // problem writing to flash drive
+            /* stop */
+            raise(SIGINT);
+        }
+        int num = 0;
+        while ((cw = fprintf(outfp, "-")) > 0 && num++ < 100) ;
+        if (cw < 0) { // problem writing to flash drive
+            /* stop */
+            raise(SIGINT);
+        }
+        cw = fprintf(outfp, "\n");
         if (cw < 0) { // problem writing to flash drive
             /* stop */
             raise(SIGINT);
