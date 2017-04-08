@@ -17,7 +17,7 @@ struct accelAxes {
     int z;
 };
 
-int initSerial(int *gpsfd);
+int initSerial();
 void readAccel(struct accelAxes *vals);
 int readAccelX();
 int readAccelY();
