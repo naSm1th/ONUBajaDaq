@@ -9,6 +9,18 @@
  *****************************************************************************/
 
 /* the serial port to use for GPS UART communication */
-#define SERIALPORT "/dev/ttyS0i"
+#define SERIALPORT "/dev/serial0"
 
+struct accelAxes {
+    int x;
+    int y;
+    int z;
+};
 
+int initSerial();
+void readAccel(struct accelAxes *vals);
+int readAccelX();
+int readAccelY();
+int readAccelZ();
+void rwSPI(char *buffer);
+int closeSerial(int fd);
