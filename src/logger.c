@@ -329,7 +329,6 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "%s: code: %d, cause: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
                 raise(SIGINT);
             } else {
-                
                 if ((gpsdata.status != STATUS_FIX) || gpsdata.fix.mode < MODE_2D || isnan(gpsdata.fix.latitude) || isnan(gpsdata.fix.longitude)) {
                     /* gps is invalid */
                     fprintf(stderr, "%s: code: %d, cause: %s\n", LOG_LEVEL, rc, gps_errstr(rc));

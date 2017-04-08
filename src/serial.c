@@ -28,109 +28,24 @@
      and the accelerometer modules 
     takes file descriptor to be used as argument
     returns 0 on success, non-zero on error (see serial.h) */
-int initSerial(int *gpsfd) {
+int initSerial() {
     /* initialize GPS UART */
-    *gpsfd = open(SERIALPORT, O_RDWR | O_NOCTTY);
+    //int gpsfd = open(SERIALPORT, O_RDWR | O_NOCTTY);
 
-    if (*gpsfd == -1) {
+    //if (gpsfd == -1) {
         /* error - cannot open port */
-        return -1;
-    }
-    
-    /* get current serial port parameters */
-    struct termios options;
-    tcgetattr(*gpsfd, &options);
-    
-    /* set baud rate */
-    cfsetispeed(&options, B9600);
-    cfsetospeed(&options, B9600);
-
-    /* set other necessary parameters */
-    options.c_cflag |= (CLOCAL | CREAD);
-
-    /* apply new parameters */
-    tcsetattr(*gpsfd, TCSANOW, &options);
-
-    char buffer[6];
-    int valid = 0;
-    /* test settings */
-    /* give it 5 attempts */
-    int i, len;
-    for (i = 0; i < 25; i ++) {
-        ioctl(*gpsfd, TCIOFLUSH, 2);
-        memset(buffer, 0, 6);
-        len = 0;
-        /* attempt to read in string */
-        len = read(*gpsfd, buffer, 6);
-        if (len != 6) {
-            continue;
-        }
-        if (!strcmp(buffer, "$GPRMC")) {
-            valid = 1;
-            break;
-        }
-        if (!strcmp(buffer, "$GPGGA")) {
-            valid = 1;
-            break;
-        }
-        usleep(100000);
-    }
-
-    /* check if we are still at 9600 baud */
-    /* if so, change baud rate of device and serial port */
-    /* also change update rate of device */
-    if (valid == 1) {
-        /* change baud rate of device */
-        if (write(*gpsfd, "$PMTK251,115200*1F\r\n", 20)) {
-            /* error writing */
-        }
-
-        /* change baud rate of serial port */
-        /* get current settings */
-        tcgetattr(*gpsfd, &options);
-    
-        /* set baud rate */
-        cfsetispeed(&options, B115200);
-        cfsetospeed(&options, B115200);
-        
-        /* save config */
-        tcsetattr(*gpsfd, TCSANOW, &options);
-    }
-
-    valid = 0;
-
-    /* verify we are at 115200 baud rate */
-    /* give it 5 attempts */
-    for (i = 0; i < 25; i ++) {
-        ioctl(*gpsfd, TCIOFLUSH, 2);
-        memset(buffer, 0, 6);
-        len = 0;
-        /* attempt to read in string */
-        len = read(*gpsfd, buffer, 6);
-        if (len != 6) {
-            continue;
-        }
-        if (!strcmp(buffer, "$GPRMC")) {
-            valid = 1;
-            break;
-        }
-        if (!strcmp(buffer, "$GPGGA")) {
-            valid = 1;
-            break;
-        }
-        usleep(100000);
-    }
-
-    /* check to see if we still can't read data */
-    if (valid == 0) {
-        return -1;
-    }
+    //    return -1;
+    //}
 
     /* change update rate of device */
-    if (write(*gpsfd, "$PMTK220,100*2F\r\n", 17)) {
-        /* error writing */
-    }
+    //if (!write(gpsfd, "$PMTK220,100*2F\r\n", 17)) {
+        /* error - cannot write */
+    //    perror("serial write");
+    //    return -2;
+    //}
 
+    /* close file */
+    //close(gpsfd);
 
     /* initialize accelerometer SPI */
     /* initialize wiringpi library to use SPI interface */
