@@ -89,16 +89,22 @@ int getSerial(int fd, char **lines) {
 static void cleanup(int sig) {
     /* free all allocated memory */
     freeEverything();
+
     /* shutdown gps stream */
     gps_stream(&gpsdata, WATCH_DISABLE, NULL);
     gps_close(&gpsdata);
+
     /* close open files */
     fcloseall();
+   
     /* set flag to stop */
     run = 0;
+    
+    /* join thread */
     if (pthread_join(thread, NULL)) {
         fprintf(stderr, "%s: error in pthread_join", LOG_LEVEL);
     }
+
     fflush(stdout);
     exit(EXIT_SUCCESS);
 }
@@ -162,47 +168,41 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         strcpy(dirname,gpsdate);
         strcat(dirname,"_");
         strcat(dirname,gpstime);
-        //strptime(dirname, "%d%m%y_%H%M%S", &tm);
         /* set time for new file check */ 
-        //oldtime = mktime(&tm);
-        //newtime = mktime(&tm);
         *oldtime = (double)gpsdata.fix.time;
         *newtime = *oldtime;
         /* open new file */
         filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
-        //sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, *fn);
         sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
-        // make new directory
+        /* make new directory */
         if (mkdir(filepath,0700))
             fprintf(stderr, "%s: log directory could not be created (USB might not be mounted)\n", LOG_LEVEL);
         sprintf(filepath+strlen(filepath),"%03d.csv", *fn);
         outfp = fopen(filepath, "a");
-        // insert file header
+        /* insert file header */
         cw = fprintf(outfp, "%s\n|  time  |   lat   |   long   |speed| ... |\n", fdate);
-        if (cw < 0) { // problem writing to flash drive
+        /* check for problem writing to flash drive */
+        if (cw < 0) { 
             /* stop */
             raise(SIGINT);
         }
         int num = 0;
         while ((cw = fprintf(outfp, "-")) > 0 && num++ < 100) ;
-        if (cw < 0) { // problem writing to flash drive
+        /* check for problem writing to flash drive */
+        if (cw < 0) { 
             /* stop */
             raise(SIGINT);
         }
         cw = fprintf(outfp, "\n");
-        if (cw < 0) { // problem writing to flash drive
+        /* check for problem writing to flash drive */
+        if (cw < 0) { 
             /* stop */
             raise(SIGINT);
         }
     } else {
-        //strcat(gpsdate,gpstime);
-        //strptime(gpsdate, "%d%m%y%H%M%S", &tm);
-        //interval = difftime(mktime(&tm),newtime);
-        //newtime = mktime(&tm);
         interval = (double)gpsdata.fix.time-*newtime;
         *newtime = (double)gpsdata.fix.time;
         if (*newtime - *oldtime > 60.0) {
-            // oldtime = mktime(&tm);
             *oldtime = *newtime;
             /* close old file */
             fclose(outfp);
@@ -220,7 +220,8 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
     snprintf(gpsstr+strlen(gpsstr),MAX_GPS_LEN-strlen(gpsstr),"%.1lf",speed);
     /* write to file */
     cw = fprintf(outfp, "%s", gpsstr);
-    if (cw < 0) { // problem writing to flash drive
+    /* check for problem writing to flash drive */
+    if (cw < 0) { 
         /* stop */
         raise(SIGINT);
     }
@@ -233,14 +234,16 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         } else {
             cw = fprintf(outfp, ",%lf", 0.0);
         }
-        if (cw < 0) { // problem writing to flash drive
+        /* check for problem writing to flash drive */
+        if (cw < 0) { 
             /* stop */
             raise(SIGINT);
         }
     }
     memset(counts, 0, sizeof(int)*8);
     cw = fprintf(outfp, "\n");
-    if (cw < 0) { // problem writing to flash drive
+    /* check for problem writing to flash drive */
+    if (cw < 0) { 
         /* stop */
         raise(SIGINT);
     }
@@ -326,20 +329,23 @@ int main(int argc, char *argv[]) {
     waitForGPS();
 
     int runlimit = 0;
-    while (runlimit < 1000) {
-        runlimit++;
+    while (runlimit++ < 1200) {
         printf("%s: logging...%d\n", LOG_LEVEL, runlimit);
         if (!gps_waiting(&gpsdata, 5000000)) {
             /* timeout after 5 seconds */
             fprintf(stderr, "%s: gpsd not available\n", LOG_LEVEL);
             raise(SIGINT);
         } else { 
-            /* read from gps */
-            if ((rc = gps_read(&gpsdata)) < 0) {
+            /* empty buffer on first time */
+            while ((rc = gps_read(&gpsdata)) > 0 && first) {
+                printf("%s: %d bytes read\n", LOG_LEVEL, rc);
+            }
+            if (rc < 0) {
                 /* read error */
                 fprintf(stderr, "%s: code: %d, cause: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
                 raise(SIGINT);
             } else {
+                /* check gps fix */
                 if ((gpsdata.status != STATUS_FIX) || gpsdata.fix.mode < MODE_2D || isnan(gpsdata.fix.latitude) || isnan(gpsdata.fix.longitude)) {
                     /* gps is invalid */
                     fprintf(stderr, "%s: code: %d, cause: %s\n", LOG_LEVEL, rc, gps_errstr(rc));

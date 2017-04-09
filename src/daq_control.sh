@@ -54,7 +54,7 @@ fi
 sleep 3
 # mount USB
 echo "$log_level: Mounting USB" 
-"./mount.sh"
+./mount.sh -m
 status=$?
 if [ $status -eq 0 ]; then # if success
     if [ -f $daqc ]; then
@@ -75,7 +75,7 @@ if [ $status -eq 0 ]; then # if success
             kill -2 $pid
             wait $pid
             if [ $? -eq 0 ]; then # if success
-                "./mount.sh" # umount usb
+                ./mount.sh -u # umount usb
                 if [ $? -eq 0 ]; then # if success
                     if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
                         echo "$log_level: Logging session terminated"
@@ -90,11 +90,11 @@ if [ $status -eq 0 ]; then # if success
                 if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
                     echo "$log_level: error in $daqc"
                 fi
-                "./mount.sh" # umount usb
+                ./mount.sh -u # umount usb
                 # LED ERROR
             fi
         else
-            "./mount.sh" # umount usb
+            ./mount.sh -u # umount usb
             if [ $? -eq 0 ]; then # if success
                 if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
                     echo "$log_level: Logging session terminated"
@@ -108,7 +108,7 @@ if [ $status -eq 0 ]; then # if success
         fi
     else
         echo "$log_level: $daqc does not exist"
-        "./mount.sh" # umount usb
+        ./mount.sh -u # umount usb
         # LED ERROR
     fi
 else
