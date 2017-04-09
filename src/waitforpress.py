@@ -17,3 +17,5 @@ while True:
     else:
         print("low")
     time.sleep(0.5)
+    # remove when button works
+    break;
