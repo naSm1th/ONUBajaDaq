@@ -225,6 +225,19 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         /* stop */
         raise(SIGINT);
     }
+    /* accelerometer data */
+    struct accelAxes *accel = malloc(sizeof(float) * 3);
+    if (readAccel(accel) != 0) {
+        printf("error in readAccel()\n");
+    }
+    /* write to file */
+    cw = fprintf(outfp, ",%lf,%lf,%lf", accel->x, accel->y, accel->z);
+    free(accel);
+    /* check for problem writing to flash drive */
+    if (cw < 0) { 
+        /* stop */
+        raise(SIGINT);
+    }
     // read counts from USBDaq
     cw = 1;
     int i;
@@ -328,8 +341,15 @@ int main(int argc, char *argv[]) {
     /* wait for gps fix */
     waitForGPS();
 
+    /* log time */
+    unsigned long starttime = time(NULL);
+    unsigned long halftime = 0;
+
     int runlimit = 0;
     while (runlimit++ < 1200) {
+        if (runlimit == 600) {
+            halftime = time(NULL);
+        }
         printf("%s: logging...%d\n", LOG_LEVEL, runlimit);
         if (!gps_waiting(&gpsdata, 5000000)) {
             /* timeout after 5 seconds */
@@ -358,10 +378,14 @@ int main(int argc, char *argv[]) {
                     processData(&oldtime, &newtime, &filenum, first);
                     if (first) first = 0;
                 }
+                else {
+                    runlimit--;
+                }
                 /* save time for duplicate GPS data check */
                 lasttime = (double)gpsdata.fix.time;
             }
         }
     }
+    printf("\n\ntotal time: %ld\nfirst half: %ld\nsecond half: %ld\n", (time(NULL) - starttime), (halftime-starttime), (time(NULL) - halftime));
     return EXIT_SUCCESS;
 }
