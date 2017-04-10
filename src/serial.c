@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <wiringPiSPI.h>
 
 #include "serial.h"
 
@@ -64,11 +65,11 @@ int initSerial() {
 
 /* reads values from 3 axes of accelerometer via SPI */
 /* struct should already be initialized */
-void readAccel(struct accelAxes *vals) {
+int readAccel(struct accelAxes *vals) {
     /* read from all 6 registers */
     memset(buffer, 0, 100);
     buffer[0] = 0x28 | 0b11000000;
-    ret = wiringPiSPIDataRW(CHANNEL, buffer, 7);
+    int ret = wiringPiSPIDataRW(CHANNEL, buffer, 7);
     
     if (ret < 0) {
         printf("Error: failed to read/write!!!\n\n");
@@ -79,4 +80,6 @@ void readAccel(struct accelAxes *vals) {
     vals->x = ((float)((short)(buffer[1] | (buffer[2]<<8))))/8190*CONST_GRAVITY;
     vals->y = ((float)((short)(buffer[3] | (buffer[4]<<8))))/8190*CONST_GRAVITY;
     vals->z = ((float)((short)(buffer[5] | (buffer[6]<<8))))/8190*CONST_GRAVITY;
+
+    return 0;
 }

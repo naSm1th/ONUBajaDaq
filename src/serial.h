@@ -14,10 +14,10 @@
 #define CONST_GRAVITY 9.80665 
 
 struct accelAxes {
-    int x;
-    int y;
-    int z;
+    float x;
+    float y;
+    float z;
 };
 
 int initSerial();
-void readAccel(struct accelAxes *vals);
+int readAccel(struct accelAxes *vals);
