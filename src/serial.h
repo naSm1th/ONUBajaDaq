@@ -9,7 +9,9 @@
  *****************************************************************************/
 
 /* the serial port to use for GPS UART communication */
-#define SERIALPORT "/dev/serial0"
+#define CHANNEL 0
+#define SPEED 100000
+#define CONST_GRAVITY 9.80665 
 
 struct accelAxes {
     int x;
@@ -19,8 +21,3 @@ struct accelAxes {
 
 int initSerial();
 void readAccel(struct accelAxes *vals);
-int readAccelX();
-int readAccelY();
-int readAccelZ();
-void rwSPI(char *buffer);
-int closeSerial(int fd);
