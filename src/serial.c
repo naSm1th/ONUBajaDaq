@@ -1,117 +1,85 @@
 /*****************************************************************************
- * serial.c - methods to configure serial sensors                            *
+ * serial.c - methods to configure serial sensors (currently accelerometer)  *
  *                                                                           *
  * Author: Nathanael A. Smith - nasmith@olivet.edu                           *
  *                                                                           *
  * This file is part of the Baja DAQ System for Olivet Nazarene University   *
  * Copyright 2017 Nathanael A. Smith & Ryan Carl                             *
  * License: MIT License (see LICENSE for more details)                       *
- *                                                                           *
- * This file contains code copied from the Serial Programming Guide for      *
- * Posix Operating Systems (https://www.cmrr.umn.edu/~strupp/serial.html) by *
- * John Paul Strupp. Thanks to him and the Center for Magnetic Resonance     *
- * Research, University of Minnesota Medical School.                         *
  *****************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <termios.h>
-#include <string.h>
-#include <sys/ioctl.h>
+#include <wiringPiSPI.h>
 
 #include "serial.h"
 
-/* this method configures the UART and SPI interfaces for GPS
-     and the accelerometer modules 
-    takes file descriptor to be used as argument
+/* the file descriptor for the accelerometer */
+int fd;
+
+/* buffer for all commands/data */
+unsigned char buffer[100];
+
+/* this method configures the SPI interface for the accelerometer module
     returns 0 on success, non-zero on error (see serial.h) */
 int initSerial() {
-    /* initialize GPS UART */
-    //int gpsfd = open(SERIALPORT, O_RDWR | O_NOCTTY);
+    /* return value */
+    int ret;
 
-    //if (gpsfd == -1) {
-        /* error - cannot open port */
-    //    return -1;
-    //}
+    /* initialize the SPI interface */
+    fd = wiringPiSPISetup(CHANNEL, SPEED);
+    
+    if (fd < 0) {
+        printf("Error: failed to open channel!!!\n\n");
+        return -1;
+    }
 
-    /* change update rate of device */
-    //if (!write(gpsfd, "$PMTK220,100*2F\r\n", 17)) {
-        /* error - cannot write */
-    //    perror("serial write");
-    //    return -2;
-    //}
+    printf("fd = %d\n", fd);
+    
+    /* enable axes, set data rate to 400 Hz */
+    memset(buffer, 0, 100);
+    buffer[0] = 0x20 | 0b00000000;
+    buffer[1] = 0b01110111;
+    ret = wiringPiSPIDataRW(CHANNEL, buffer, 2);
+    
+    if (ret < 0) {
+        printf("Error: failed to read/write!!!\n\n");
+        return -1;
+    }
 
-    /* close file */
-    //close(gpsfd);
 
-    /* initialize accelerometer SPI */
-    /* initialize wiringpi library to use SPI interface */
+    /* set full-scale measurement to +/- 4G */
+    memset(buffer, 0, 100);
+    buffer[0] = 0x23 | 0b00000000;
+    buffer[1] = 0b00010000;
+    ret = wiringPiSPIDataRW(CHANNEL, buffer, 2);
+    
+    if (ret < 0) {
+        printf("Error: failed to read/write!!!\n\n");
+        return -1;
+    }
 
-    /* set FIFO mode to bypass */
-    /* set FIFO_CTRL_REG (2Eh) to 0 ? */
-    /* set FS bit to 11 */
-    /* set CTRL_REG1[3] (LPen bit) to 0 */
-    /* set CTRL_REG4[3] (HR bit) to 1 */
-    /* set CTRL_REG1[0-3] = 0010 */
     return 0;
 }
 
 /* reads values from 3 axes of accelerometer via SPI */
 /* struct should already be initialized */
-void readAccel(struct accelAxes *vals) {
-    vals->x = readAccelX();
-    vals->y = readAccelY();
-    vals->z = readAccelZ();
-}
+int readAccel(struct accelAxes *vals) {
+    /* read from all 6 registers */
+    memset(buffer, 0, 100);
+    buffer[0] = 0x28 | 0b11000000;
+    int ret = wiringPiSPIDataRW(CHANNEL, buffer, 7);
+    
+    if (ret < 0) {
+        printf("Error: failed to read/write!!!\n\n");
+        return -1;
+    }
+    
+    /* store data in struct */
+    vals->x = ((float)((short)(buffer[1] | (buffer[2]<<8))))/8190*CONST_GRAVITY;
+    vals->y = ((float)((short)(buffer[3] | (buffer[4]<<8))))/8190*CONST_GRAVITY;
+    vals->z = ((float)((short)(buffer[5] | (buffer[6]<<8))))/8190*CONST_GRAVITY;
 
-/* reads value of x axis of accelerometer via SPI */
-int readAccelX() {
-    char buffer[100];
-    strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    rwSPI(buffer);
-    char upper = 0;
-    strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    rwSPI(buffer);
-    char lower = 0;
-
-    return (lower || upper<<8);;
-}
-
-/* reads value of y axis of accelerometer via SPI */
-int readAccelY() {
-    char buffer[100];
-    strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    rwSPI(buffer);
-    char upper = 0;
-    strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    rwSPI(buffer);
-    char lower = 0;
-
-    return (lower || upper<<8);;
-}
-
-/* reads value of z axis of accelerometer via SPI */
-int readAccelZ() {
-    char buffer[100];
-    strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    rwSPI(buffer);
-    char upper = 0;
-    strcpy(buffer, ""); /* TODO: put characters in buffer */;
-    rwSPI(buffer);
-    char lower = 0;
-
-    return (lower || upper<<8);;
-}
-
-/* writes from buffer to SPI and reads response into same buffer */
-void rwSPI(char *buffer) {
-    /* TODO: write I/O stuff for SPI */
-}
-
-/* cleans up serial interface */
-int closeSerial(int fd) {
-    return close(fd);
+    return 0;
 }
