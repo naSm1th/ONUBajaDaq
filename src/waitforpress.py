@@ -10,7 +10,7 @@ button = 4
 GPIO.setup(button, GPIO.IN, GPIO.PUD_UP)
 
 # print ("waiting for button press...")
-raw_input("waiting for button press...\n)
+raw_input("waiting for button press...\n")
 sys.exit(0)
 
 while True:
