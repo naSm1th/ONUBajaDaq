@@ -197,7 +197,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         }
         interval = (double)gpsdata.fix.time-*newtime;
         *newtime = (double)gpsdata.fix.time;
-        if (*newtime - *oldtime > 60.0) {
+        if (*newtime - *oldtime >= 60.0) {
             *oldtime = *newtime;
             /* close old file */
             fclose(outfp);
