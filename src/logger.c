@@ -141,6 +141,7 @@ void waitForGPS() {
 void processData(double *oldtime, double *newtime, int *fn, int first) {
     double interval;	        // interval for usb daq counts
     int cw;		                // fprintf return val
+    
     /* initialize all pointers */
     gpsstr = (char *) malloc(MAX_GPS_LEN);
     gpsdate = (char *) malloc(7);
@@ -148,6 +149,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
     msstr = (char *) malloc(5);
     latitude = (char *) malloc(11);
     longitude = (char *) malloc(11);
+
     /* date and time */
     time_t ts = (time_t)gpsdata.fix.time;
     /* get decimal part */
@@ -180,13 +182,19 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         sprintf(filepath+strlen(filepath),"%03d.csv", *fn);
         outfp = fopen(filepath, "a");
         /* insert file header */
-        cw = fprintf(outfp, "%s\nMetric:,Time,Latitude,Longitude,Speed\nUnits:,HHMMSS,DD.dddddd,DDD.dddddd,km/s\n\n", fdate);
+        cw = fprintf(outfp, "%s\nMetric:,Time,Latitude,Longitude,Speed,X-Accel,Y-Accel,Z-Accel\nUnits:,HHMMSS,DD.dddddd,DDD.dddddd,m/s,m/s^2,m/s^2\n\n", fdate);
         /* check for problem writing to flash drive */
         if (cw < 0) { 
             /* stop */
             raise(SIGINT);
         }
     } else {
+        /* blank first column */
+        cw = fprintf(outfp, ",");
+        if (cw < 0) { 
+            /* stop */
+            raise(SIGINT);
+        }
         interval = (double)gpsdata.fix.time-*newtime;
         *newtime = (double)gpsdata.fix.time;
         if (*newtime - *oldtime > 60.0) {
@@ -201,9 +209,9 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
             outfp = fopen(filepath, "a");
         }
     }
-    /* speed (knots to mph) */
+    /* speed (knots to m/s) */
     double speed = gpsdata.fix.speed;
-    speed = speed*6076.0/5280.0;
+    speed = speed/1.9438445;
     snprintf(gpsstr+strlen(gpsstr),MAX_GPS_LEN-strlen(gpsstr),"%.1lf",speed);
     /* write to file */
     cw = fprintf(outfp, "%s", gpsstr);
@@ -328,16 +336,8 @@ int main(int argc, char *argv[]) {
     /* wait for gps fix */
     waitForGPS();
 
-    /* log time */
-    unsigned long starttime = time(NULL);
-    unsigned long halftime = 0;
-
-    int runlimit = 0;
-    while (runlimit++ < 1200) {
-        if (runlimit == 600) {
-            halftime = time(NULL);
-        }
-        printf("%s: logging...%d\n", LOG_LEVEL, runlimit);
+    while (1) {
+        printf("%s: logging...\n", LOG_LEVEL);
         if (!gps_waiting(&gpsdata, 5000000)) {
             /* timeout after 5 seconds */
             fprintf(stderr, "%s: gpsd not available\n", LOG_LEVEL);
@@ -345,7 +345,8 @@ int main(int argc, char *argv[]) {
         } else { 
             /* empty buffer on first time */
             while ((rc = gps_read(&gpsdata)) > 0 && first) {
-                printf("%s: %d bytes read\n", LOG_LEVEL, rc);
+                // printf("%s: %d bytes read\n", LOG_LEVEL, rc);
+                ;
             }
             if (rc < 0) {
                 /* read error */
@@ -365,14 +366,10 @@ int main(int argc, char *argv[]) {
                     processData(&oldtime, &newtime, &filenum, first);
                     if (first) first = 0;
                 }
-                else {
-                    runlimit--;
-                }
                 /* save time for duplicate GPS data check */
                 lasttime = (double)gpsdata.fix.time;
             }
         }
     }
-    printf("\n\ntotal time: %ld\nfirst half: %ld\nsecond half: %ld\n", (time(NULL) - starttime), (halftime-starttime), (time(NULL) - halftime));
     return EXIT_SUCCESS;
 }

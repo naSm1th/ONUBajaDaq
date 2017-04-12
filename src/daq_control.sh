@@ -12,10 +12,27 @@ PROD=0
 DEV=1
 DEBUG=2
 
-mode=$DEV                  # controls logging
+mode=$DEV                # controls logging
 log_level="onubajadaq"     # name of main program
 daqc="daq"                 # name of executable c file
+success=1                  # error detect flag
 
+function finish {
+    ./mount.sh -u
+    if [ $? -ne 0 ]; then # if exit code non-zero 
+        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+            echo "$log_level: error in mount"
+        fi
+        success=0
+        # LED ERROR
+    fi
+}
+trap finish EXIT
+
+# mount USB
+echo "$log_level: Mounting USB" 
+./mount.sh -m
+status=$?
 # listen for button press
 python waitforpress.py
 if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
@@ -48,72 +65,75 @@ if [ $mode = $DEBUG ]; then
 fi
 gpsctl -c 0.1
 # wait for 3 seconds
-if [ $mode = $DEBUG ]; then
+if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
     echo "$log_level: Waiting for changes to take effect"
 fi
 sleep 3
-# mount USB
-echo "$log_level: Mounting USB" 
-./mount.sh -m
-status=$?
-if [ $status -eq 0 ]; then # if success
+
+if [ $status -eq 0 ]; then # if mounted successfully
     if [ -f $daqc ]; then
         if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
             echo "$log_level: Starting logger" 
         fi
+
         "./$daqc" &
         pid=$!
         # listen for button press
-        # "python waitforpress.py"
-        read stop
+        python waitforpress.py
+
+        # wait for button press or daqc stop
+        # wait -n
         # check to see if daqc is still running
         if ps -p $pid > /dev/null
         then 
-            if [ $mode = $DEBUG ]; then
-                echo "$log_level: $daqc already terminated"
+            if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+                echo "$log_level: terminating session..." 
             fi
             kill -2 $pid
             wait $pid
-            if [ $? -eq 0 ]; then # if success
-                ./mount.sh -u # umount usb
-                if [ $? -eq 0 ]; then # if success
-                    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-                        echo "$log_level: Logging session terminated"
-                    fi
-                else
-                    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-                        echo "$log_level: error in mount"
-                    fi
-                    # LED ERROR
-                fi
-            else
+            exit_status=$?
+            if [ $exit_status -ne 0 ]; then # if exit code non-zero 
                 if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
                     echo "$log_level: error in $daqc"
                 fi
-                ./mount.sh -u # umount usb
+                success=0
                 # LED ERROR
             fi
-        else
-            ./mount.sh -u # umount usb
-            if [ $? -eq 0 ]; then # if success
-                if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-                    echo "$log_level: Logging session terminated"
-                fi
-            else
-                if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-                    echo "$log_level: error in mount"
-                fi
+        else # daqc already terminated
+            if [ $exit_status -ne 0 ]; then # if exit code non-zero
+                success=0
                 # LED ERROR
             fi
         fi
+        #else
+        #    if [ $exit_status -ne 0 ]; then # if exit code non-zero
+        #        success=0
+        #        # LED ERROR
+        #    fi
+        #fi
     else
-        echo "$log_level: $daqc does not exist"
-        ./mount.sh -u # umount usb
+        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+            echo "$log_level: $daqc does not exist"
+        fi
+        success=0
         # LED ERROR
     fi
 else
-    # show error on LED
-    echo "$log_level: error in mount"
+    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+        echo "$log_level: error in mount"
+    fi
+    # LED ERROR
 fi
 # stop gpsd
 sudo killall gpsd
+if [ $success -eq 0 ]; then
+    # LED ERROR
+    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+        echo "$log_level: error"
+    fi
+else
+    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+        echo "$log_level: Logging session terminated"
+    fi
+    # LED SUCCESS
+fi
