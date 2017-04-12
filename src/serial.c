@@ -35,7 +35,7 @@ int initSerial() {
         return -1;
     }
 
-    printf("fd = %d\n", fd);
+    //printf("fd = %d\n", fd);
     
     /* enable axes, set data rate to 400 Hz */
     memset(buffer, 0, 100);
