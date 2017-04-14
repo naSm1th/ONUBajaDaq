@@ -1,24 +1,19 @@
 #!/usr/bin/env python
 
-import time, sys
+import time
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-button = 4
+button = 21
 
-GPIO.setup(button, GPIO.IN, GPIO.PUD_UP)
+GPIO.setup(button, GPIO.IN)
 
-# print ("waiting for button press...")
-raw_input("waiting for button press...\n")
-sys.exit(0)
-
+print ("waiting for button press...")
 while True:
     button_state = GPIO.input(button)
     if button_state == GPIO.HIGH:
         print ("high")
+        break;
     else:
-        print("low")
-    time.sleep(0.5)
-    # remove when button works
-    break;
+        time.sleep(0.5)

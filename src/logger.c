@@ -44,6 +44,12 @@ char *fdate;                // formatted date
 char *latitude, *longitude; // coordinates
 char *gpsstr;               // string to write to file
 
+/* struct for accelerometer stuff */
+struct accelAxes *accel;
+
+/* PID of bash script - used for signaling to change LED color */
+int bashPID;
+
 void freeEverything() {
     if (filepath != NULL) free(filepath);
     if (dirname != NULL) free(dirname);
@@ -54,35 +60,7 @@ void freeEverything() {
     if (msstr != NULL) free(msstr);
     if (latitude != NULL) free(latitude);
     if (longitude != NULL) free(latitude);
-}
-
-/* gets input from serial
- * returns number of lines read
- */
-int getSerial(int fd, char **lines) {
-    char line[256]; 
-    int cr, n;
-
-    n = 0;
-    
-    if (fd == -1) {
-        /* stop */
-        raise(SIGINT);
-        return fd;
-    }
-    while ((cr = read(fd, (void*)line, sizeof(line)-1)) > 0) {
-        if (!strcmp(line,"") || line[0] == '\n') break;
-        line[cr] = '\0';
-        *lines++ = line;
-        n++;
-    }
-    if (cr < 0) {
-        fprintf(stderr, "%s: error in getSerial", LOG_LEVEL);
-        /* stop */
-        raise(SIGINT);
-        return cr;
-    }
-    return n;
+    if (accel != NULL) free(accel);
 }
 
 /* stops program and wraps up */
@@ -141,7 +119,6 @@ void waitForGPS() {
 void processData(double *oldtime, double *newtime, int *fn, int first) {
     double interval;	        // interval for usb daq counts
     int cw;		                // fprintf return val
-    
     /* initialize all pointers */
     gpsstr = (char *) malloc(MAX_GPS_LEN);
     gpsdate = (char *) malloc(7);
@@ -149,6 +126,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
     msstr = (char *) malloc(5);
     latitude = (char *) malloc(11);
     longitude = (char *) malloc(11);
+    accel = malloc(sizeof(float) * 3);
 
     /* date and time */
     time_t ts = (time_t)gpsdata.fix.time;
@@ -165,6 +143,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
     snprintf(longitude+1, 10, "%03lf", fabs(gpsdata.fix.longitude));
     /* leave off leading 0 of ms */
     sprintf(gpsstr,"%s%s,%s,%s,",gpstime,msstr+1,latitude,longitude);
+
     if (first) {
         dirname = (char *) malloc(15);
         strcpy(dirname,gpsdate);
@@ -191,6 +170,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
     } else {
         /* blank first column */
         cw = fprintf(outfp, ",");
+        /* check for problem writing to flash drive */
         if (cw < 0) { 
             /* stop */
             raise(SIGINT);
@@ -209,32 +189,33 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
             outfp = fopen(filepath, "a");
         }
     }
+
     /* speed (knots to m/s) */
     double speed = gpsdata.fix.speed;
     speed = speed/1.9438445;
     snprintf(gpsstr+strlen(gpsstr),MAX_GPS_LEN-strlen(gpsstr),"%.1lf",speed);
-    /* write to file */
+
+    /* write formatted gps data to file */
     cw = fprintf(outfp, "%s", gpsstr);
     /* check for problem writing to flash drive */
     if (cw < 0) { 
         /* stop */
         raise(SIGINT);
     }
-    /* accelerometer data */
-    struct accelAxes *accel = malloc(sizeof(float) * 3);
+
+    /* accelerometer */
     if (readAccel(accel) != 0) {
         printf("error in readAccel()\n");
     }
-    /* write to file */
+    /* write accel data to file */
     cw = fprintf(outfp, ",%lf,%lf,%lf", accel->x, accel->y, accel->z);
-    free(accel);
     /* check for problem writing to flash drive */
     if (cw < 0) { 
         /* stop */
         raise(SIGINT);
     }
-    // read counts from USBDaq
-    cw = 1;
+
+    /* USB device (sensors) */
     int i;
     for (i = 0; i < 8; i++) {
         if (interval > 10e-4) {
@@ -249,12 +230,14 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         }
     }
     memset(counts, 0, sizeof(int)*8);
+
     cw = fprintf(outfp, "\n");
     /* check for problem writing to flash drive */
     if (cw < 0) { 
         /* stop */
         raise(SIGINT);
     }
+
     /* free allocated memory
        that isn't save for next iteration */
     free(gpsdate);
@@ -263,6 +246,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
     free(msstr);
     free(latitude);
     free(longitude);
+    free(accel);
     /* initialize to NULL in case
        program is terminated before 
        initialization */
@@ -272,6 +256,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
     msstr = NULL;
     latitude = NULL;
     longitude = NULL;
+    accel = NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -292,6 +277,13 @@ int main(int argc, char *argv[]) {
     latitude = NULL;
     longitude = NULL;
     gpsstr = NULL;
+    accel = NULL;
+
+    /* store PID of bash script to signal later */
+    if (argc < 2) {
+        exit(1);
+    }
+    bashPID = atoi(argv[1]);
 
     run = 1;
     // catch ctrl-C 
@@ -335,6 +327,9 @@ int main(int argc, char *argv[]) {
   
     /* wait for gps fix */
     waitForGPS();
+
+    /* tell bash/python we are ready; update LED color */
+    kill(bashPID, SIGUSR1);
 
     while (1) {
         printf("%s: logging...\n", LOG_LEVEL);
