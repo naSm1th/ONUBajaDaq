@@ -12,10 +12,11 @@ PROD=0
 DEV=1
 DEBUG=2
 
-mode=$DEV                  # controls logging
+mode=$DEBUG                  # controls logging
 log_level="onubajadaq"     # name of main program
 daqc="daq"                 # name of executable c file
 success=1                  # error detect flag
+fix=0                      # gps fix flag
 
 # one of these will be called on exit
 function finish1 {
@@ -42,20 +43,13 @@ function finish2 {
     # stop gpsd
     sudo killall gpsd
 
-    # check for successful execution
-    if [ $success -eq 0 ]; then
-        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-            echo "$log_level: error"
-        fi
-        # show error on LED
-        python updateled.py red
-    else
-        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-            echo "$log_level: Logging session terminated"
-        fi
-        # LED SUCCESS
-        python updateled.py green
-    fi
+    # turn off LED 
+    python updateled.py
+}
+
+function logger_ready {
+    fix=1
+    python updateled.py green
 }
 
 # change baud rate
@@ -111,12 +105,9 @@ sleep 3
 # make sure removable storage is mounted
 if [ $mnt_status -eq 0 ]; then
     if [ -f $daqc ]; then
-        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-            echo "$log_level: Starting logger" 
-        fi
         # trap update for led
-        trap "python updateled.py green" SIGUSR1
-        python updateled.py red
+        trap logger_ready SIGUSR1
+        python updateled.py blue 
 
         # listen for button press
         python waitforpress.py
@@ -125,7 +116,10 @@ if [ $mnt_status -eq 0 ]; then
         if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
             echo "$log_level: Logging session initiated"
         fi
-        python updateled.py blue
+        python updateled.py red 
+        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+            echo "$log_level: Starting logger" 
+        fi
         "./$daqc" "$$" &
         logger_pid=$!
         # wait for feedback before listening again
@@ -179,4 +173,17 @@ else
     # show error on LED
     python updateled.py red
     success=0
+fi
+
+# check for successful execution
+if [ $fix -eq 0 ]; then
+    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+        echo "$log_level: No GPS fix"
+    fi
+    # show error on LED
+    python updateled.py red    
+elif [ $success -ne 0 ]; then
+    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+        echo "$log_level: Logging session terminated successfully"
+    fi
 fi
