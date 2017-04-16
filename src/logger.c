@@ -1,7 +1,7 @@
 /*****************************************************************************
  * logger.c - control gathering and storing of metrics to csv file           *
  *                                                                           *
- * Author: Ryan Carl - rpcarl@olivet.edu                                     *
+ * Contributors: Ryan Carl, Nathanael Smith                                  *
  *                                                                           *   
  *                                                                           *
  * This file is part of the Baja DAQ System for Olivet Nazarene University   *
@@ -26,7 +26,7 @@
 #define MAX_GPS_LEN     100             /* max GPS string length */
 #define MAX_TOKENS      13              /* max num tokens in GPS string */
 #define LOG_DIR         "/mnt/bajadaq"  /* directory for logs (flash drive) */
-#define LOG_LEVEL       "logger"      /* name of file for logging */
+#define NAME            "logger"        /* name of file for logging */
 
 /* USB interface */
 int run;                    // control flag for loop in usbdaq.c
@@ -80,7 +80,9 @@ static void cleanup(int sig) {
     
     /* join thread */
     if (pthread_join(thread, NULL)) {
-        fprintf(stderr, "%s: error in pthread_join", LOG_LEVEL);
+        fprintf(stderr, "%s: error in pthread_join", NAME);
+        /* stop */
+        raise(SIGINT);
     }
 
     fflush(stdout);
@@ -93,19 +95,21 @@ void waitForGPS() {
     int timer = 0;
     if (!gps_waiting(&gpsdata, 5000000)) {
         /* timeout after 5 seconds */
-        fprintf(stderr, "%s: gpsd not available\n", LOG_LEVEL);
+        fprintf(stderr, "%s: gpsd not available\n", NAME);
+        /* stop */
         raise(SIGINT);
     } else { 
-        printf("%s: waiting for fix...\n", LOG_LEVEL);
+        printf("%s: waiting for fix...\n", NAME);
         /* wait for fix, timeout after 30 sec */
         while (!fixed && timer++ < 300) {
             /* read data */
             if ((rc = gps_read(&gpsdata)) < 0) {
-                fprintf(stderr, "%s: code: %d, cause: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
+                fprintf(stderr, "%s: code: %d, cause: %s\n", NAME, rc, gps_errstr(rc));
+                /* stop */
                 raise(SIGINT);
             } else {
                 if ((gpsdata.status == STATUS_FIX) && gpsdata.fix.mode >= MODE_2D && !isnan(gpsdata.fix.latitude) && !isnan(gpsdata.fix.longitude)) {
-                    printf("%s: got the fix\n", LOG_LEVEL);
+                    printf("%s: got the fix\n", NAME);
                     fixed = 1;
                 } else ;
             }
@@ -156,12 +160,15 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         filepath = (char *) malloc(strlen(LOG_DIR)+strlen(dirname)+10);
         sprintf(filepath, "%s/%s/", LOG_DIR, dirname);
         /* make new directory */
-        if (mkdir(filepath,0700))
-            fprintf(stderr, "%s: log directory could not be created (USB might not be mounted)\n", LOG_LEVEL);
+        if (mkdir(filepath,0700)) {
+            fprintf(stderr, "%s: log directory could not be created (USB might not be mounted)\n", NAME);
+            /* stop */
+            raise(SIGINT);
+        }
         sprintf(filepath+strlen(filepath),"%03d.csv", *fn);
         outfp = fopen(filepath, "a");
         /* insert file header */
-        cw = fprintf(outfp, "%s\nMetric:,Time,Latitude,Longitude,Speed,X-Accel,Y-Accel,Z-Accel\nUnits:,HHMMSS,DD.dddddd,DDD.dddddd,m/s,m/s^2,m/s^2\n\n", fdate);
+        cw = fprintf(outfp, "%s\nMetric:,Time,Latitude,Longitude,Speed,X-Accel,Y-Accel,Z-Accel\nUnits:,HHMMSS,DD.dddddd,DDD.dddddd,m/s,m/s^2,m/s^2\n\n,", fdate);
         /* check for problem writing to flash drive */
         if (cw < 0) { 
             /* stop */
@@ -286,13 +293,16 @@ int main(int argc, char *argv[]) {
     bashPID = atoi(argv[1]);
 
     run = 1;
-    // catch ctrl-C 
+    /* catch ctrl-C */
     struct sigaction sa;
     sa.sa_handler = cleanup;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART; 
-    if (sigaction(SIGINT, &sa, NULL) == -1)
-        fprintf(stderr, "%s: problem with SIGINT catch", LOG_LEVEL);
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        fprintf(stderr, "%s: problem with SIGINT catch", NAME);
+        /* stop */
+        raise(SIGINT);
+    }
 
     /* thread USB daq */
     pthread_attr_t attr;
@@ -305,22 +315,23 @@ int main(int argc, char *argv[]) {
     params.run = &run;
 
     if (pthread_create(&thread, &attr, initUSBDaq, &params)) {
-        fprintf(stderr, "%s: error in pthread_create", LOG_LEVEL);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "%s: error in pthread_create", NAME);
+        /* stop */
+        raise(SIGINT);
     }   
     /* destroy thread */
     pthread_attr_destroy(&attr);
 
     /* initialize serial */
     if (initSerial()) {
-        // failure
-        fprintf(stderr, "%s: initSerial failed\n", LOG_LEVEL);
-        // check error type
+        fprintf(stderr, "%s: initSerial failed\n", NAME);
+        /* stop */
         raise(SIGINT);
     }
 
     if ((rc = gps_open("localhost", "2947", &gpsdata)) == -1) {
-        fprintf(stderr, "%s: code: %d, reason: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
+        fprintf(stderr, "%s: code: %d, reason: %s\n", NAME, rc, gps_errstr(rc));
+        /* stop */
         raise(SIGINT);
     }
     gps_stream(&gpsdata, WATCH_ENABLE | WATCH_JSON, NULL);
@@ -332,26 +343,27 @@ int main(int argc, char *argv[]) {
     kill(bashPID, SIGUSR1);
 
     while (1) {
-        printf("%s: logging...\n", LOG_LEVEL);
+        printf("%s: logging...\n", NAME);
         if (!gps_waiting(&gpsdata, 5000000)) {
             /* timeout after 5 seconds */
-            fprintf(stderr, "%s: gpsd not available\n", LOG_LEVEL);
+            fprintf(stderr, "%s: gpsd not available\n", NAME);
+            /* stop */
             raise(SIGINT);
         } else { 
             /* empty buffer on first time */
             while ((rc = gps_read(&gpsdata)) > 0 && first) {
-                // printf("%s: %d bytes read\n", LOG_LEVEL, rc);
                 ;
             }
             if (rc < 0) {
                 /* read error */
-                fprintf(stderr, "%s: code: %d, cause: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
+                fprintf(stderr, "%s: code: %d, cause: %s\n", NAME, rc, gps_errstr(rc));
+                /* stop */
                 raise(SIGINT);
             } else {
                 /* check gps fix */
                 if ((gpsdata.status != STATUS_FIX) || gpsdata.fix.mode < MODE_2D || isnan(gpsdata.fix.latitude) || isnan(gpsdata.fix.longitude)) {
                     /* gps is invalid */
-                    fprintf(stderr, "%s: code: %d, cause: %s\n", LOG_LEVEL, rc, gps_errstr(rc));
+                    fprintf(stderr, "%s: code: %d, cause: %s\n", NAME, rc, gps_errstr(rc));
                     waitForGPS();
                 }
 

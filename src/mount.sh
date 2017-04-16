@@ -12,7 +12,7 @@ log_level="mount"
 
 if [ $# -eq 0 ]; then
     # no cl arg
-    echo "$log_level: please specify mount or umont"
+    echo "$log_level: please specify mount or umount"
 else
     if [ $1 = "-m" ]; then
         # mount

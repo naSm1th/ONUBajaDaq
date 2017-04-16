@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import time
+import time, sys
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -9,11 +9,17 @@ button = 21
 
 GPIO.setup(button, GPIO.IN)
 
-print ("waiting for button press...")
+hold = 0
 while True:
-    button_state = GPIO.input(button)
-    if button_state == GPIO.HIGH:
-        print ("high")
-        break;
-    else:
-        time.sleep(0.5)
+    # hold detection accurate to 0.25 sec
+    while GPIO.input(button) == GPIO.HIGH and hold <= 12:
+        hold += 1
+        time.sleep(0.25)
+    # if button was held, exit 1
+    if hold > 12:
+        sys.exit(1)
+    # if button was pressed, exit 0
+    if hold > 0:
+        sys.exit(0)
+    # debounce
+    time.sleep(0.05)
