@@ -30,6 +30,11 @@ function finish1 {
         # show error on LED
         ./updateled.py red
     fi
+
+    # make sure user has time to see error before exit
+    sleep 10
+    # turn off LED 
+    ./updateled.py
 }
 
 function finish2 {
@@ -48,6 +53,8 @@ function finish2 {
     # stop gpsd
     sudo killall gpsd
 
+    # make sure user has time to see error before exit
+    sleep 10
     # turn off LED 
     ./updateled.py
 }
@@ -58,18 +65,24 @@ function logger_ready {
     button_pid=$!
 }
 
+# show program execution start
+# since running on boot
+if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+    echo "\n\n------ Baja Data Acquisition ------\n"
+fi
 # clear LED if lit
 ./updateled.py
 
 # check for c file
 if [ ! -f $daqc ]; then
     if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-        echo "$name: $daqc does not exist"
+        echo "$name: $daqc does not exist\nTerminating program..."
     fi
     # show error on LED 
     ./updateled.py red
     # make sure user has time to see error before exit
     sleep 10
+    ./updateled.py
     exit
 fi
 
@@ -82,12 +95,13 @@ mnt_status=$?
 # make sure removable storage is mounted
 if [ $mnt_status -ne 0 ]; then
     if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-        echo "$name: removable storage not found"
+        echo "$name: removable storage not found\nTerminating program..."
     fi
     # show error on LED
     ./updateled.py red
     # make sure user has time to see error before exit
     sleep 10
+    ./updateled.py
     exit
 fi
 

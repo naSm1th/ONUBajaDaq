@@ -100,8 +100,8 @@ void waitForGPS() {
         raise(SIGINT);
     } else { 
         printf("%s: waiting for fix...\n", NAME);
-        /* wait for fix, timeout after 30 sec */
-        while (!fixed && timer++ < 300) {
+        /* wait for fix, timeout after 10 sec */
+        while (!fixed && timer++ < 10) {
             /* read data */
             if ((rc = gps_read(&gpsdata)) < 0) {
                 fprintf(stderr, "%s: code: %d, cause: %s\n", NAME, rc, gps_errstr(rc));
@@ -168,20 +168,13 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
         sprintf(filepath+strlen(filepath),"%03d.csv", *fn);
         outfp = fopen(filepath, "a");
         /* insert file header */
-        cw = fprintf(outfp, "%s\nMetric:,Time,Latitude,Longitude,Speed,X-Accel,Y-Accel,Z-Accel\nUnits:,HHMMSS,DD.dddddd,DDD.dddddd,m/s,m/s^2,m/s^2\n\n,", fdate);
+        cw = fprintf(outfp, "%s\nMetric:,Time,Latitude,Longitude,Speed,X-Accel,Y-Accel,Z-Accel\nUnits:,HHMMSS,DD.dddddd,DDD.dddddd,m/s,m/s^2,m/s^2\n\n", fdate);
         /* check for problem writing to flash drive */
         if (cw < 0) { 
             /* stop */
             raise(SIGINT);
         }
     } else {
-        /* blank first column */
-        cw = fprintf(outfp, ",");
-        /* check for problem writing to flash drive */
-        if (cw < 0) { 
-            /* stop */
-            raise(SIGINT);
-        }
         interval = (double)gpsdata.fix.time-*newtime;
         *newtime = (double)gpsdata.fix.time;
         if (*newtime - *oldtime >= 60.0) {
@@ -195,6 +188,14 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
             sprintf(filepath, "%s/%s/%03d.csv", LOG_DIR, dirname, *fn);
             outfp = fopen(filepath, "a");
         }
+    }
+
+    /* blank first column */
+    cw = fprintf(outfp, ",");
+    /* check for problem writing to flash drive */
+    if (cw < 0) { 
+        /* stop */
+        raise(SIGINT);
     }
 
     /* speed (knots to m/s) */
