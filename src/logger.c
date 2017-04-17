@@ -116,6 +116,7 @@ void waitForGPS() {
             sleep(1);
         }
         if (!fixed)
+            /* stop */
             raise(SIGINT);
     }
 }

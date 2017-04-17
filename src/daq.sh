@@ -22,15 +22,6 @@ function finish1 {
     # show error on LED (exited early)
     ./updateled.py red
 
-    ./mount.sh -u
-    if [ $? -ne 0 ]; then # if exit code non-zero 
-        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-            echo "$name: error in mount"
-        fi
-        # show error on LED
-        ./updateled.py red
-    fi
-
     # pause to show error 
     sleep 10
     # turn off LED 
@@ -41,17 +32,6 @@ function finish2 {
     # program ran successfully,
     # errored out,
     # or was terminated via cmd line
-    ./mount.sh -u
-    if [ $? -ne 0 ]; then # if exit code non-zero 
-        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-            echo "$name: error in mount"
-        fi
-        # show error on LED
-        ./updateled.py red
-        # pause to show error 
-        sleep 10
-    fi
-
     # stop gpsd
     sudo killall gpsd
 
@@ -68,7 +48,7 @@ function logger_ready {
 # show program execution start
 # since running on boot
 if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-    echo "\n\n------ Baja Data Acquisition ------\n"
+    printf "\n\n------ Baja Data Acquisition ------\n"
 fi
 # clear LED if lit
 ./updateled.py
@@ -79,25 +59,6 @@ if [ ! -f $daqc ]; then
         echo "$name: $daqc does not exist\nTerminating program..."
     fi
     # show error on LED 
-    ./updateled.py red
-    # pause to show error 
-    sleep 10
-    ./updateled.py
-    exit
-fi
-
-# mount removable storage 
-if [ $mode = $DEBUG ]; then
-    echo "$name: Mounting storage" 
-fi
-./mount.sh -m
-mnt_status=$?
-# make sure removable storage is mounted
-if [ $mnt_status -ne 0 ]; then
-    if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-        echo "$name: removable storage not found\nTerminating program..."
-    fi
-    # show error on LED
     ./updateled.py red
     # pause to show error 
     sleep 10
@@ -148,7 +109,7 @@ if [ $mode = $DEBUG ]; then
 fi
 sleep 3
 
-# trap update for led
+# trap update for LED 
 trap logger_ready SIGUSR1
 
 while [ 1 ]; do
@@ -156,6 +117,8 @@ while [ 1 ]; do
     success=1
     fix=0
 
+    
+    
     # listen for button press
     if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
         echo "$name: Waiting for button press"
@@ -167,6 +130,25 @@ while [ 1 ]; do
     # quit if button is held
     if [ $? -eq 1 ]; then
         break
+    fi
+
+    # mount removable storage 
+    if [ $mode = $DEBUG ]; then
+        echo "$name: Mounting storage" 
+    fi
+    ./mount.sh -m
+    mnt_status=$?
+    # make sure removable storage is mounted
+    if [ $mnt_status -ne 0 ]; then
+        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+            echo "$name: removable storage not found\nTerminating program..."
+        fi
+        # show error on LED
+        ./updateled.py red
+        # pause to show error 
+        sleep 10
+        ./updateled.py
+        continue
     fi
 
     # start logger
@@ -185,6 +167,7 @@ while [ 1 ]; do
     # give logger 10 seconds to get set up
     s=0
     while [ $((s++)) -lt 10 -a $fix -eq 0 ]; do
+        echo "fix = $fix"
         sleep 1
     done
     
@@ -252,6 +235,20 @@ while [ 1 ]; do
         # pause to show error 
         sleep 10
     fi
+
+    # unmount flash drive
+    ./mount.sh -u
+    if [ $? -ne 0 ]; then # if exit code non-zero 
+        if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+            echo "$name: error in mount"
+        fi
+        # show error on LED
+        ./updateled.py red
+        # pause to show error 
+        sleep 10
+    fi
+
+
 done
 
 # finished logging
