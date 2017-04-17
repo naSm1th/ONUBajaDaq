@@ -31,7 +31,7 @@ function finish1 {
         ./updateled.py red
     fi
 
-    # make sure user has time to see error before exit
+    # pause to show error 
     sleep 10
     # turn off LED 
     ./updateled.py
@@ -53,7 +53,7 @@ function finish2 {
     # stop gpsd
     sudo killall gpsd
 
-    # make sure user has time to see error before exit
+    # pause to show error 
     sleep 10
     # turn off LED 
     ./updateled.py
@@ -80,7 +80,7 @@ if [ ! -f $daqc ]; then
     fi
     # show error on LED 
     ./updateled.py red
-    # make sure user has time to see error before exit
+    # pause to show error 
     sleep 10
     ./updateled.py
     exit
@@ -99,7 +99,7 @@ if [ $mnt_status -ne 0 ]; then
     fi
     # show error on LED
     ./updateled.py red
-    # make sure user has time to see error before exit
+    # pause to show error 
     sleep 10
     ./updateled.py
     exit
@@ -209,8 +209,6 @@ while [ 1 ]; do
         fi
         kill -2 $button_pid
         wait $button_pid
-        # show error on LED 
-        ./updateled.py red
         success=0
     fi
 
@@ -226,8 +224,6 @@ while [ 1 ]; do
             if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
                 echo "$name: error in $daqc"
             fi
-            # show error on LED 
-            ./updateled.py red
             success=0
         fi
     fi
@@ -239,10 +235,17 @@ while [ 1 ]; do
         fi
         # show error on LED
         ./updateled.py red    
+        # pause to show error 
+        sleep 10
     elif [ $success -ne 0 ]; then
         if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
             echo "$name: Run terminated successfully"
         fi
+    else
+        # show error on LED
+        ./updateled.py red    
+        # pause to show error 
+        sleep 10
     fi
 done
 
