@@ -48,13 +48,13 @@ function finish2 {
         fi
         # show error on LED
         ./updateled.py red
+        # pause to show error 
+        sleep 10
     fi
 
     # stop gpsd
     sudo killall gpsd
 
-    # pause to show error 
-    sleep 10
     # turn off LED 
     ./updateled.py
 }
@@ -187,44 +187,49 @@ while [ 1 ]; do
     while [ $((s++)) -lt 10 -a $fix -eq 0 ]; do
         sleep 1
     done
-    # ready to log
-    ./updateled.py green
+    
+    if [ $fix -ne 1 ]; then
+        success=0
+    else
+        # ready to log
+        ./updateled.py green
 
-    # wait for button press or logger termination (error)
-    wait -n
+        # wait for button press or logger termination (error)
+        wait -n
 
-    # check to see if waitforpress is still running
-    if ps -p $button_pid > /dev/null
-    then
+        # check to see if waitforpress is still running
+        if ps -p $button_pid > /dev/null
+        then
+            # check to see if daqc is still running
+            if ps -p $logger_pid > /dev/null
+            then 
+                if [ $mode = $DEBUG ]; then
+                    echo "$name: $daqc still running"
+                fi
+            else
+                if [ $mode = $DEBUG ]; then
+                    echo "$name: $daqc terminated early"
+                fi
+            fi
+            kill -2 $button_pid
+            wait $button_pid
+            success=0
+        fi
+
         # check to see if daqc is still running
         if ps -p $logger_pid > /dev/null
         then 
             if [ $mode = $DEBUG ]; then
-                echo "$name: $daqc still running"
+                echo "$name: Terminating $daqc"
             fi
-        else
-            if [ $mode = $DEBUG ]; then
-                echo "$name: $daqc terminated early"
+            kill -2 $logger_pid
+            wait $logger_pid
+            if [ $? -ne 0 ]; then
+                if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
+                    echo "$name: error in $daqc"
+                fi
+                success=0
             fi
-        fi
-        kill -2 $button_pid
-        wait $button_pid
-        success=0
-    fi
-
-    # check to see if daqc is still running
-    if ps -p $logger_pid > /dev/null
-    then 
-        if [ $mode = $DEBUG ]; then
-            echo "$name: Terminating $daqc"
-        fi
-        kill -2 $logger_pid
-        wait $logger_pid
-        if [ $? -ne 0 ]; then
-            if [ $mode = $DEBUG ] || [ $mode = $DEV ]; then
-                echo "$name: error in $daqc"
-            fi
-            success=0
         fi
     fi
 
