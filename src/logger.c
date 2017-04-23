@@ -10,7 +10,7 @@
  *****************************************************************************/
 
 #define _GNU_SOURCE
-#include <stdio.h>              /* printf, snprintf */
+#include <stdio.h>              /* snprintf */
 #include <stdlib.h>             /* exit */
 #include <string.h>             /* strcpy, strcat, strlen */
 #include <sys/time.h>           /* time() */
@@ -99,7 +99,7 @@ void waitForGPS() {
         /* stop */
         raise(SIGINT);
     } else { 
-        printf("%s: waiting for fix...\n", NAME);
+        // printf("%s: waiting for fix...\n", NAME);
         /* wait for fix, timeout after 10 sec */
         while (!fixed && timer++ < 10) {
             /* read data */
@@ -109,7 +109,7 @@ void waitForGPS() {
                 raise(SIGINT);
             } else {
                 if ((gpsdata.status == STATUS_FIX) && gpsdata.fix.mode >= MODE_2D && !isnan(gpsdata.fix.latitude) && !isnan(gpsdata.fix.longitude)) {
-                    printf("%s: got the fix\n", NAME);
+                    //printf("%s: got the fix\n", NAME);
                     fixed = 1;
                 } else ;
             }
@@ -214,7 +214,7 @@ void processData(double *oldtime, double *newtime, int *fn, int first) {
 
     /* accelerometer */
     if (readAccel(accel) != 0) {
-        printf("error in readAccel()\n");
+        // printf("error in readAccel()\n");
     }
     /* write accel data to file */
     cw = fprintf(outfp, ",%lf,%lf,%lf", accel->x, accel->y, accel->z);
@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
     kill(bashPID, SIGUSR1);
 
     while (1) {
-        printf("%s: logging...\n", NAME);
+        // printf("%s: logging...\n", NAME);
         if (!gps_waiting(&gpsdata, 5000000)) {
             /* timeout after 5 seconds */
             fprintf(stderr, "%s: gpsd not available\n", NAME);

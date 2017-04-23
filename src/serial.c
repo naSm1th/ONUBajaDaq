@@ -31,7 +31,7 @@ int initSerial() {
     fd = wiringPiSPISetup(CHANNEL, SPEED);
     
     if (fd < 0) {
-        printf("Error: failed to open channel!!!\n\n");
+        fprintf(stderr, "Error: failed to open channel!!!\n\n");
         return -1;
     }
 
@@ -44,7 +44,7 @@ int initSerial() {
     ret = wiringPiSPIDataRW(CHANNEL, buffer, 2);
     
     if (ret < 0) {
-        printf("Error: failed to read/write!!!\n\n");
+        fprintf(stderr, "Error: failed to read/write!!!\n\n");
         return -1;
     }
 
@@ -56,7 +56,7 @@ int initSerial() {
     ret = wiringPiSPIDataRW(CHANNEL, buffer, 2);
     
     if (ret < 0) {
-        printf("Error: failed to read/write!!!\n\n");
+        fprintf(stderr, "Error: failed to read/write!!!\n\n");
         return -1;
     }
 
@@ -72,7 +72,7 @@ int readAccel(struct accelAxes *vals) {
     int ret = wiringPiSPIDataRW(CHANNEL, buffer, 7);
     
     if (ret < 0) {
-        printf("Error: failed to read/write!!!\n\n");
+        fprintf(stderr, "Error: failed to read/write!!!\n\n");
         return -1;
     }
     
